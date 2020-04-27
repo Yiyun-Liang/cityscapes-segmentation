@@ -16,7 +16,7 @@ class BasicDataset(Dataset):
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
         
         # mask eg. erfurt_000000_000019_gtFine_color.png
-        self.ids = [splitext(file)[0].split('_leftImg8bit')[0] for fol in listdir(imgs_dir) for file in listdir(imgs_dir + fol) 
+        self.ids = [fol+'/'+splitext(file)[0].split('_leftImg8bit')[0] for fol in listdir(imgs_dir) for file in listdir(imgs_dir + fol) 
                     if file.endswith('_leftImg8bit.png')]
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
@@ -24,7 +24,7 @@ class BasicDataset(Dataset):
         return len(self.ids)
 
     @classmethod
-    def preprocess(cls, pil_img, scale):
+    def preprocess(cls, pil_img, scale, is_mask=False):
         w, h = pil_img.size
         newW, newH = int(scale * w), int(scale * h)
         assert newW > 0 and newH > 0, 'Scale is too small'
@@ -37,18 +37,18 @@ class BasicDataset(Dataset):
 
         # HWC to CHW
         img_trans = img_nd.transpose((2, 0, 1))
-        if img_trans.max() > 1:
+        if img_trans.max() > 1 and not is_mask:
             img_trans = img_trans / 255
 
         return img_trans
 
     def __getitem__(self, i):
         idx = self.ids[i]
-        mask_file = glob(self.masks_dir + idx + '_gtFine_color' + '*')
+        mask_file = glob(self.masks_dir + idx + '_gtFine_labelIds' + '*')
         img_file = glob(self.imgs_dir + idx + '*')
 
         assert len(mask_file) == 1, \
-            f'Either no mask or multiple masks found for the ID {idx}: {mask_file}'
+            f'Either no mask or multiple masks found for the ID {idx}: {mask_file} len: {len(mask_file)} dir {self.masks_dir+idx}'
         assert len(img_file) == 1, \
             f'Either no image or multiple images found for the ID {idx}: {img_file}'
         mask = Image.open(mask_file[0])
@@ -58,6 +58,6 @@ class BasicDataset(Dataset):
             f'Image and mask {idx} should be the same size, but are {img.size} and {mask.size}'
 
         img = self.preprocess(img, self.scale)
-        mask = self.preprocess(mask, self.scale)
+        mask = self.preprocess(mask, self.scale, is_mask=True)
 
         return {'image': torch.from_numpy(img), 'mask': torch.from_numpy(mask)}

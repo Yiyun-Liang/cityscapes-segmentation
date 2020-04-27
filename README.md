@@ -1,6 +1,7 @@
 # cityscapes-segmentation
 
 UNet: https://github.com/milesial/Pytorch-UNet
+Cityscapes data processing scripts: https://github.com/mcordts/cityscapesScripts
 
 ## Usage
 **Note : Use Python 3**
