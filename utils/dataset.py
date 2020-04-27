@@ -14,9 +14,10 @@ class BasicDataset(Dataset):
         self.masks_dir = masks_dir
         self.scale = scale
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
-
-        self.ids = [splitext(file)[0] for file in listdir(imgs_dir)
-                    if not file.startswith('.')]
+        
+        # mask eg. erfurt_000000_000019_gtFine_color.png
+        self.ids = [splitext(file)[0].split('_leftImg8bit')[0] for fol in listdir(imgs_dir) for file in listdir(imgs_dir + fol) 
+                    if file.endswith('_leftImg8bit.png')]
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
     def __len__(self):
@@ -43,7 +44,7 @@ class BasicDataset(Dataset):
 
     def __getitem__(self, i):
         idx = self.ids[i]
-        mask_file = glob(self.masks_dir + idx + '*')
+        mask_file = glob(self.masks_dir + idx + '_gtFine_color' + '*')
         img_file = glob(self.imgs_dir + idx + '*')
 
         assert len(mask_file) == 1, \

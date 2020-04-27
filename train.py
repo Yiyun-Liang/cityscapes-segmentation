@@ -16,8 +16,10 @@ from torch.utils.tensorboard import SummaryWriter
 from utils.dataset import BasicDataset
 from torch.utils.data import DataLoader, random_split
 
-dir_img = 'data/imgs/'
-dir_mask = 'data/masks/'
+train_dir_img = 'data/imgs/train/'
+train_dir_mask = 'data/masks/train/'
+val_dir_img = 'data/imgs/val/'
+val_dir_mask = 'data/masks/val/'
 dir_checkpoint = 'checkpoints/'
 
 
@@ -30,12 +32,13 @@ def train_net(net,
               save_cp=True,
               img_scale=0.5):
 
-    dataset = BasicDataset(dir_img, dir_mask, img_scale)
-    n_val = int(len(dataset) * val_percent)
-    n_train = len(dataset) - n_val
-    train, val = random_split(dataset, [n_train, n_val])
-    train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)
-    val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True, drop_last=True)
+    train_dataset = BasicDataset(train_dir_img, train_dir_mask, img_scale)
+    val_dataset = BasicDataset(val_dir_img, val_dir_mask, img_scale)
+    n_train = len(train_dataset)
+    n_val = len(val_dataset)
+    # train, val = random_split(train_dataset, [n_train, n_val])
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True, drop_last=True)
 
     writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
     global_step = 0
