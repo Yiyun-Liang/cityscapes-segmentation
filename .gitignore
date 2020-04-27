@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 runs/
+*.pth
 # Distribution / packaging
 .Python
 data/
