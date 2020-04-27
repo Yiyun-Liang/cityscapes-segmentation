@@ -5,8 +5,9 @@ from glob import glob
 import torch
 from torch.utils.data import Dataset
 import logging
-from PIL import Image
-import scipy.misc as m
+#from PIL import Image
+#import imageio as m
+import cv2
 
 class BasicDataset(Dataset):
     def __init__(self, imgs_dir, masks_dir, scale=1):
@@ -46,9 +47,11 @@ class BasicDataset(Dataset):
         ]
         self.ignore_index = 250
         self.class_map = dict(zip(self.valid_classes, range(19)))
-        self.transform = True
+        self.is_transform = True
         self.augmentation = None
         self.mean = [0.0,0.0,0.0]
+        self.img_size = (512, 1024)
+        self.img_norm = True
 
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
@@ -65,28 +68,25 @@ class BasicDataset(Dataset):
         assert len(img_file) == 1, \
             f'Either no image or multiple images found for the ID {idx}: {img_file}'
         
-        img = m.imread(img_file[0])
-        mask = m.imread(mask_file[0])
+        img = cv2.imread(img_file[0], cv2.IMREAD_UNCHANGED)
+        mask = cv2.imread(mask_file[0], cv2.IMREAD_UNCHANGED)
         img = np.array(img, dtype=np.uint8)
         mask = self.encode_segmap(np.array(mask, dtype=np.uint8))
-
-        assert img.size == mask.size, \
-            f'Image and mask {idx} should be the same size, but are {img.size} and {mask.size}'
 
         if self.augmentation is not None:
             img, mask = self.augmentation(img, mask)
 
-        if self.transform:
+        if self.is_transform:
             img, mask = self.transform(img, mask)
         
-        return {'image': torch.from_numpy(img).float(), 'mask': torch.from_numpy(lbl).long()}
+        return {'image': torch.from_numpy(img).float(), 'mask': torch.from_numpy(mask).long()}
 
     def transform(self, img, lbl):
         """transform
         :param img:
         :param lbl:
         """
-        img = m.imresize(img, (self.img_size[0], self.img_size[1]))  # uint8 with RGB mode
+        img = cv2.resize(img, dsize=(self.img_size[0], self.img_size[1]))  # uint8 with RGB mode
         img = img[:, :, ::-1]  # RGB -> BGR
         img = img.astype(np.float64)
         img -= self.mean
@@ -99,7 +99,7 @@ class BasicDataset(Dataset):
 
         classes = np.unique(lbl)
         lbl = lbl.astype(float)
-        lbl = m.imresize(lbl, (self.img_size[0], self.img_size[1]), "nearest", mode="F")
+        lbl = cv2.resize(lbl, dsize=(self.img_size[0], self.img_size[1]), interpolation=cv2.INTER_NEAREST)
         lbl = lbl.astype(int)
 
         if not np.all(classes == np.unique(lbl)):
