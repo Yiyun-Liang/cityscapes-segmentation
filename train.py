@@ -139,7 +139,7 @@ def get_args():
                         help='Learning rate', dest='lr')
     parser.add_argument('-f', '--load', dest='load', type=str, default=False,
                         help='Load model from a .pth file')
-    parser.add_argument('-s', '--scale', dest='scale', type=float, default=0.5,
+    parser.add_argument('-s', '--scale', dest='scale', type=float, default=1,
                         help='Downscaling factor of the images')
     parser.add_argument('-v', '--validation', dest='val', type=float, default=10.0,
                         help='Percent of the data that is used as validation (0-100)')
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     device = torch.device('cpu') #torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     if torch.cuda.is_available():
         torch.cuda.set_device(0)
-        #device = 'cuda:0'
+        device = torch.device("cuda", 0)
     logging.info(f'Using device {device}')
 
     # Change here to adapt to your data
