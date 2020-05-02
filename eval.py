@@ -50,19 +50,14 @@ def eval_net(net, loader, device, running_metrics_val, best_iou, writer, logging
     if score["Mean IoU : \t"] >= best_iou:
         cur_iou = score["Mean IoU : \t"]
         state = {
-            "epoch": i + 1,
-            "model_state": model.state_dict(),
-            "optimizer_state": optimizer.state_dict(),
-            "scheduler_state": scheduler.state_dict(),
-            "best_iou": best_iou,
+            "epoch": epoch + 1,
+            "model_state": net.state_dict(),
+            "best_iou": cur_iou,
         }
-        save_path = os.path.join(
-            "best_iou",
-            "{}_{}_best_model.pkl".format(cfg["model"]["arch"], cfg["data"]["dataset"]),
-        )
-        torch.save(state, save_path)
+        torch.save(state,
+                   'best_iou/' + f'best_model_epoch{epoch + 1}.pth')
 
-    return tot / n_val, best_iou
+    return tot / n_val, cur_iou
 
 def test_net(net, loader, device, running_metrics_val):
     """Evaluation without the densecrf with the dice coefficient"""
