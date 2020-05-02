@@ -6,8 +6,8 @@ import torch
 from torch.utils.data import Dataset
 import logging
 #from PIL import Image
-#import imageio as m
 import cv2
+import torchvision.transforms as transforms
 
 class BasicDataset(Dataset):
     def __init__(self, imgs_dir, masks_dir, scale=1):
@@ -47,11 +47,18 @@ class BasicDataset(Dataset):
         ]
         self.ignore_index = 250
         self.class_map = dict(zip(self.valid_classes, range(19)))
-        self.is_transform = True
+        self.mean = [0.28689554, 0.32513303, 0.28389177]
+        self.std = [0.18696375, 0.19017339, 0.18720214]
+        self.img_transform = transforms.Compose([
+           transforms.Resize((128,256)),
+           transforms.ToTensor(),
+           transforms.Normalize(self.mean, self.std)
+        ])
+        self.mask_transform = transforms.Compose([
+           transforms.Resize((128,256)),
+           transforms.ToTensor()
+        ])
         self.augmentation = None
-        self.mean = [0.0,0.0,0.0]
-        self.img_size = (512, 1024)
-        self.img_norm = True
 
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
@@ -70,14 +77,16 @@ class BasicDataset(Dataset):
         
         img = cv2.imread(img_file[0], cv2.IMREAD_UNCHANGED)
         mask = cv2.imread(mask_file[0], cv2.IMREAD_UNCHANGED)
+        # Transform
+        # img_as_tensor = self.transforms(img)
+        # mask_as_tensor = self.transforms(mask)
+
         img = np.array(img, dtype=np.uint8)
         mask = self.encode_segmap(np.array(mask, dtype=np.uint8))
+        img, mask = self.transform(img, mask)
 
         if self.augmentation is not None:
             img, mask = self.augmentation(img, mask)
-
-        if self.is_transform:
-            img, mask = self.transform(img, mask)
         
         return {'image': torch.from_numpy(img).float(), 'mask': torch.from_numpy(mask).long()}
 
@@ -86,11 +95,11 @@ class BasicDataset(Dataset):
         :param img:
         :param lbl:
         """
-        img = cv2.resize(img, dsize=(self.img_size[0], self.img_size[1]))  # uint8 with RGB mode
+        img = cv2.resize(img, dsize=(128,256))  # uint8 with RGB mode
         img = img[:, :, ::-1]  # RGB -> BGR
         img = img.astype(np.float64)
-        img -= self.mean
-        if self.img_norm:
+        img -= 0.0
+        if True:
             # Resize scales images from 0 to 255, thus we need
             # to divide by 255.0
             img = img.astype(float) / 255.0
@@ -99,7 +108,7 @@ class BasicDataset(Dataset):
 
         classes = np.unique(lbl)
         lbl = lbl.astype(float)
-        lbl = cv2.resize(lbl, dsize=(self.img_size[0], self.img_size[1]), interpolation=cv2.INTER_NEAREST)
+        lbl = cv2.resize(lbl, dsize=(128,256), interpolation=cv2.INTER_NEAREST)
         lbl = lbl.astype(int)
 
         if not np.all(classes == np.unique(lbl)):

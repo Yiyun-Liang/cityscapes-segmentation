@@ -57,7 +57,7 @@ def train_net(net,
     optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
     if net.n_classes > 1:
-        criterion = nn.CrossEntropyLoss()
+        criterion = nn.CrossEntropyLoss(ignore_index=250)
     else:
         criterion = nn.BCEWithLogitsLoss()
 
@@ -80,7 +80,8 @@ def train_net(net,
                 true_masks = true_masks.to(device=device, dtype=mask_type)
 
                 masks_pred = net(imgs)
-                #print(masks_pred.shape, true_masks.shape, true_masks.squeeze(1).shape)
+                # print(true_masks)
+                # print(masks_pred.shape, true_masks.shape, true_masks.squeeze(1).shape)
                 loss = criterion(masks_pred, true_masks.squeeze(1))
                 epoch_loss += loss.item()
                 writer.add_scalar('Loss/train', loss.item(), global_step)
