@@ -99,27 +99,28 @@ def train_net(net,
 
                 pbar.update(imgs.shape[0])
                 global_step += 1
-                if global_step % ((n_train+n_val) // (10 * batch_size)) == 0:
+                # if global_step % ((n_train+n_val) // (10 * batch_size)) == 0:
                 # if global_step % 5 == 0:
-                    for tag, value in net.named_parameters():
-                        tag = tag.replace('.', '/')
-                        writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
-                        writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
-                    val_score, best_iou = eval_net(net, val_loader, device, running_metrics_val, best_iou, writer, logging, epoch)
-                    scheduler.step(val_score)
-                    writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
+        
+        for tag, value in net.named_parameters():
+            tag = tag.replace('.', '/')
+            writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
+            writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
+        val_score, best_iou = eval_net(net, val_loader, device, running_metrics_val, best_iou, writer, logging, epoch)
+        scheduler.step(val_score)
+        writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 
-                    if net.n_classes > 1:
-                        logging.info('Validation cross entropy: {}'.format(val_score))
-                        writer.add_scalar('Loss/test', val_score, global_step)
-                    else:
-                        logging.info('Validation Dice Coeff: {}'.format(val_score))
-                        writer.add_scalar('Dice/test', val_score, global_step)
+        if net.n_classes > 1:
+            logging.info('Validation cross entropy: {}'.format(val_score))
+            writer.add_scalar('Loss/test', val_score, global_step)
+        else:
+            logging.info('Validation Dice Coeff: {}'.format(val_score))
+            writer.add_scalar('Dice/test', val_score, global_step)
 
-                    writer.add_images('images', imgs, global_step)
-                    if net.n_classes == 1:
-                        writer.add_images('masks/true', true_masks, global_step)
-                        writer.add_images('masks/pred', torch.sigmoid(masks_pred) > 0.5, global_step)
+        writer.add_images('images', imgs, global_step)
+        if net.n_classes == 1:
+            writer.add_images('masks/true', true_masks, global_step)
+            writer.add_images('masks/pred', torch.sigmoid(masks_pred) > 0.5, global_step)
 
         if save_cp:
             try:
