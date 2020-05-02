@@ -38,12 +38,12 @@ def eval_net(net, loader, device, running_metrics_val, best_iou, writer, logging
     for k, v in score.items():
         print(k, v)
         logging.info("{}: {}".format(k, v))
-        writer.add_scalar("val_metrics/{}".format(k), v, i)
+        writer.add_scalar("val_metrics/{}".format(k), v, epoch)
 
     for k, v in class_iou.items():
         print(k, v)
         logging.info("{}: {}".format(k, v))
-        writer.add_scalar("val_metrics/cls_{}".format(k), v, i)
+        writer.add_scalar("val_metrics/cls_{}".format(k), v, epoch)
 
     running_metrics_val.reset()
 
