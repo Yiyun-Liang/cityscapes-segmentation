@@ -13,51 +13,54 @@ from unet import UNet
 from utils.data_vis import plot_img_and_mask
 from utils.dataset import BasicDataset
 
-test_dir_img = 'data/imgs/test/'
-test_dir_mask = 'data/masks/test/'
-test_output_imgs = 'output/'
 
 def predict_img(net,
                 full_img,
                 device,
                 scale_factor=1,
                 out_threshold=0.5):
+    net.eval()
+    img = np.array(full_img, dtype=np.uint8)
+    img = img.transpose(2, 0, 1)
+    img = torch.from_numpy(img)
+    #img = torch.from_numpy(BasicDataset.transform(full_img, scale_factor))
 
-    test_dataset = BasicDataset(test_dir_img, test_dir_mask, split='test')
-    n_test = len(test_dataset)
-    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=8, pin_memory=True)
-    
-    # net.eval()
-    # mask_type = torch.float32 if net.n_classes == 1 else torch.long
+    img = img.unsqueeze(0)
+    img = img.to(device=device, dtype=torch.float32)
 
-    test_net(net, test_loader, device)
+    with torch.no_grad():
+        output = net(img)
 
-    # with tqdm(total=n_test, desc='Test round', unit='batch', leave=False) as pbar:
-    #     for batch in loader:
-    #         imgs, true_masks = batch['image'], batch['mask']
-    #         imgs = imgs.to(device=device, dtype=torch.float32)
-    #         true_masks = true_masks.to(device=device, dtype=mask_type)
+        if net.n_classes > 1:
+            probs = F.softmax(output, dim=1)
+        else:
+            probs = torch.sigmoid(output)
 
-    #         with torch.no_grad():
-    #             mask_pred = net(imgs)
+        probs = probs.squeeze(0)
+        print(img.shape, probs.shape)
+        tf = transforms.Compose(
+            [
+                transforms.ToPILImage(),
+                #transforms.Resize(full_img.size()[1]),
+                transforms.ToTensor()
+            ]
+        )
 
-    #         probs = F.softmax(mask_pred, dim=1)
-    #         probs = probs.squeeze(0)
-    #         full_mask = probs.squeeze().cpu().numpy()
+        #probs = tf(probs.cpu())
+        full_mask = probs.squeeze().cpu().numpy()
+    return full_mask
 
-    #         pbar.update()
-
-def decode_segmap(img, label_colours):
-    img = img.transpose(1,2,0)
-    img = np.argmax(img, axis=2)
-    r = img.copy()
-    g = img.copy()
-    b = img.copy()
+def decode_segmap(temp, label_colours):
+    temp = temp.transpose(1,2,0)
+    temp = np.argmax(temp, axis=2)
+    r = temp.copy()
+    g = temp.copy()
+    b = temp.copy()
     for l in range(0, 19):
-        r[img == l] = label_colours[l][0]
-        g[img == l] = label_colours[l][1]
-        b[img == l] = label_colours[l][2]
-    rgb = np.zeros((img.shape[0], img.shape[1], 3))
+        r[temp == l] = label_colours[l][0]
+        g[temp == l] = label_colours[l][1]
+        b[temp == l] = label_colours[l][2]
+    rgb = np.zeros((temp.shape[0], temp.shape[1], 3))
     rgb[:, :, 0] = r / 255.0
     rgb[:, :, 1] = g / 255.0
     rgb[:, :, 2] = b / 255.0
@@ -141,13 +144,13 @@ if __name__ == "__main__":
                            out_threshold=args.mask_threshold,
                            device=device)
 
-        # if not args.no_save:
-        #     out_fn = out_files[i]
-        #     result = mask_to_image(decode_segmap(mask, label_colours))
-        #     result.save(out_files[i])
+        if not args.no_save:
+            out_fn = out_files[i]
+            result = mask_to_image(decode_segmap(mask, label_colours))
+            result.save(out_files[i])
 
-        #     logging.info("Mask saved to {}".format(out_files[i]))
+            logging.info("Mask saved to {}".format(out_files[i]))
 
-        # if args.viz:
-        #     logging.info("Visualizing results for image {}, close to continue ...".format(fn))
-        #     plot_img_and_mask(img, mask)
+        if args.viz:
+            logging.info("Visualizing results for image {}, close to continue ...".format(fn))
+            plot_img_and_mask(img, mask)

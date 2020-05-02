@@ -12,6 +12,7 @@ from tqdm import tqdm
 from eval import eval_net
 from unet import UNet
 
+from utils.metrics import runningScore, averageMeter
 from torch.utils.tensorboard import SummaryWriter
 from utils.dataset import BasicDataset
 from torch.utils.data import DataLoader, random_split
@@ -42,6 +43,9 @@ def train_net(net,
 
     writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
     global_step = 0
+
+    best_iou = -100.0
+    running_metrics_val = runningScore(net.n_classes)
 
     logging.info(f'''Starting training:
         Epochs:          {epochs}
@@ -95,12 +99,13 @@ def train_net(net,
 
                 pbar.update(imgs.shape[0])
                 global_step += 1
-                if global_step % ((n_train+n_val) // (10 * batch_size)) == 0:
+                # if global_step % ((n_train+n_val) // (10 * batch_size)) == 0:
+                if global_step % 5 == 0:
                     for tag, value in net.named_parameters():
                         tag = tag.replace('.', '/')
                         writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
                         writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
-                    val_score = eval_net(net, val_loader, device)
+                    val_score, best_iou = eval_net(net, val_loader, device, running_metrics_val, best_iou, writer, logging, global_step)
                     scheduler.step(val_score)
                     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
 

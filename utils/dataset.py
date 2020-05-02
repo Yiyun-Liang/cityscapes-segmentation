@@ -5,12 +5,12 @@ from glob import glob
 import torch
 from torch.utils.data import Dataset
 import logging
-#from PIL import Image
+from PIL import Image
 import cv2
 import torchvision.transforms as transforms
 
 class BasicDataset(Dataset):
-    def __init__(self, imgs_dir, masks_dir, scale=1):
+    def __init__(self, imgs_dir, masks_dir, split='train', scale=1):
         self.imgs_dir = imgs_dir
         self.masks_dir = masks_dir
         self.scale = scale
@@ -50,15 +50,16 @@ class BasicDataset(Dataset):
         self.mean = [0.28689554, 0.32513303, 0.28389177]
         self.std = [0.18696375, 0.19017339, 0.18720214]
         self.img_transform = transforms.Compose([
-           transforms.Resize((128,256)),
-           transforms.ToTensor(),
-           transforms.Normalize(self.mean, self.std)
+            transforms.Resize((128,256)),
+            transforms.ToTensor(),
+            transforms.Normalize(self.mean, self.std)
         ])
         self.mask_transform = transforms.Compose([
-           transforms.Resize((128,256)),
-           transforms.ToTensor()
+            transforms.ToPILImage(),
+            transforms.Resize((128,256), interpolation=Image.NEAREST),
         ])
         self.augmentation = None
+        self.split = split
 
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
@@ -67,62 +68,27 @@ class BasicDataset(Dataset):
 
     def __getitem__(self, i):
         idx = self.ids[i]
-        mask_file = glob(self.masks_dir + idx + '_gtFine_labelIds' + '*')
         img_file = glob(self.imgs_dir + idx + '*')
+        if self.split is not 'test':
+            mask_file = glob(self.masks_dir + idx + '_gtFine_labelIds' + '*')
 
-        assert len(mask_file) == 1, \
-            f'Either no mask or multiple masks found for the ID {idx}: {mask_file} len: {len(mask_file)} dir {self.masks_dir+idx}'
         assert len(img_file) == 1, \
             f'Either no image or multiple images found for the ID {idx}: {img_file}'
+        if self.split is not 'test':
+            assert len(mask_file) == 1, \
+                f'Either no mask or multiple masks found for the ID {idx}: {mask_file} len: {len(mask_file)} dir {self.masks_dir+idx}'
         
-        img = cv2.imread(img_file[0], cv2.IMREAD_UNCHANGED)
-        mask = cv2.imread(mask_file[0], cv2.IMREAD_UNCHANGED)
+        img = Image.open(img_file[0]).convert('RGB')
+        if self.split is not 'test':
+            mask = Image.open(mask_file[0])
         # Transform
-        # img_as_tensor = self.transforms(img)
-        # mask_as_tensor = self.transforms(mask)
-
-        img = np.array(img, dtype=np.uint8)
-        mask = self.encode_segmap(np.array(mask, dtype=np.uint8))
-        img, mask = self.transform(img, mask)
-
-        if self.augmentation is not None:
-            img, mask = self.augmentation(img, mask)
-        
-        return {'image': torch.from_numpy(img).float(), 'mask': torch.from_numpy(mask).long()}
-
-    def transform(self, img, lbl):
-        """transform
-        :param img:
-        :param lbl:
-        """
-        img = cv2.resize(img, dsize=(128,256))  # uint8 with RGB mode
-        img = img[:, :, ::-1]  # RGB -> BGR
-        img = img.astype(np.float64)
-        img -= 0.0
-        if True:
-            # Resize scales images from 0 to 255, thus we need
-            # to divide by 255.0
-            img = img.astype(float) / 255.0
-        # NHWC -> NCHW
-        img = img.transpose(2, 0, 1)
-
-        classes = np.unique(lbl)
-        lbl = lbl.astype(float)
-        lbl = cv2.resize(lbl, dsize=(128,256), interpolation=cv2.INTER_NEAREST)
-        lbl = lbl.astype(int)
-
-        if not np.all(classes == np.unique(lbl)):
-            print("WARN: resizing labels yielded fewer classes")
-
-        if not np.all(np.unique(lbl[lbl != self.ignore_index]) < self.n_classes):
-            print("after det", classes, np.unique(lbl))
-            raise ValueError("Segmentation map contained invalid class values")
-
-        # img = torch.from_numpy(img).float()
-        # lbl = torch.from_numpy(lbl).long()
-
-        return img, lbl
-
+        img_as_tensor = self.img_transform(img)
+        if self.split is not 'test':
+            mask = self.encode_segmap(np.array(mask, dtype=np.uint8))
+            mask_as_tensor = self.mask_transform(mask)
+            return {'image': img_as_tensor, 'mask': torch.from_numpy(np.array(mask_as_tensor)).long()}
+        else:
+            return {'image': img_as_tensor}
 
     def decode_segmap(self, temp):
         r = temp.copy()

@@ -3,6 +3,11 @@
 UNet: https://github.com/milesial/Pytorch-UNet
 Cityscapes data processing scripts: https://github.com/mcordts/cityscapesScripts
 
+dataloader files:
+https://github.com/lxtGH/GALD-Net/blob/master/libs/datasets/cityscapes.py
+
+https://github.com/meetshah1995/pytorch-semseg/blob/master/ptsemseg/loader/cityscapes_loader.py
+
 ## Usage
 **Note : Use Python 3**
 ### Prediction
