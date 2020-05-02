@@ -6,7 +6,7 @@ import os
 from utils.dice_loss import dice_coeff
 
 
-def eval_net(net, loader, device, running_metrics_val, best_iou, writer, logging, i):
+def eval_net(net, loader, device, running_metrics_val, best_iou, writer, logging, epoch):
     """Evaluation without the densecrf with the dice coefficient"""
     net.eval()
     mask_type = torch.float32 if net.n_classes == 1 else torch.long
