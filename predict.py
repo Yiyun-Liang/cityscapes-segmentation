@@ -7,6 +7,7 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 from torchvision import transforms
+import cv2
 
 from unet import UNet
 from utils.data_vis import plot_img_and_mask
@@ -19,8 +20,10 @@ def predict_img(net,
                 scale_factor=1,
                 out_threshold=0.5):
     net.eval()
-
-    img = torch.from_numpy(BasicDataset.preprocess(full_img, scale_factor))
+    img = np.array(full_img, dtype=np.uint8)
+    img = img.transpose(2, 0, 1)
+    img = torch.from_numpy(img)
+    #img = torch.from_numpy(BasicDataset.transform(full_img, scale_factor))
 
     img = img.unsqueeze(0)
     img = img.to(device=device, dtype=torch.float32)
@@ -34,20 +37,34 @@ def predict_img(net,
             probs = torch.sigmoid(output)
 
         probs = probs.squeeze(0)
-
+        print(img.shape, probs.shape)
         tf = transforms.Compose(
             [
                 transforms.ToPILImage(),
-                transforms.Resize(full_img.size[1]),
+                #transforms.Resize(full_img.size()[1]),
                 transforms.ToTensor()
             ]
         )
 
-        probs = tf(probs.cpu())
+        #probs = tf(probs.cpu())
         full_mask = probs.squeeze().cpu().numpy()
+    return full_mask
 
-    return full_mask > out_threshold
-
+def decode_segmap(temp, label_colours):
+    temp = temp.transpose(1,2,0)
+    temp = np.argmax(temp, axis=2)
+    r = temp.copy()
+    g = temp.copy()
+    b = temp.copy()
+    for l in range(0, 19):
+        r[temp == l] = label_colours[l][0]
+        g[temp == l] = label_colours[l][1]
+        b[temp == l] = label_colours[l][2]
+    rgb = np.zeros((temp.shape[0], temp.shape[1], 3))
+    rgb[:, :, 0] = r / 255.0
+    rgb[:, :, 1] = g / 255.0
+    rgb[:, :, 2] = b / 255.0
+    return rgb
 
 def get_args():
     parser = argparse.ArgumentParser(description='Predict masks from input images',
@@ -75,6 +92,9 @@ def get_args():
 
     return parser.parse_args()
 
+colors = [ [128, 64, 128],[244, 35, 232],[70, 70, 70],[102, 102, 156],[190, 153, 153],[153, 153, 153],[250, 170, 30],[220, 220, 0],[107, 142, 35],[152, 251, 152],[0, 130, 180],[220, 20, 60],[255, 0, 0],[0, 0, 142],[0, 0, 70],[0, 60, 100],[0, 80, 100],[0, 0, 230],[119, 11, 32],]
+
+label_colours = dict(zip(range(19), colors))
 
 def get_output_filenames(args):
     in_files = args.input
@@ -102,11 +122,11 @@ if __name__ == "__main__":
     in_files = args.input
     out_files = get_output_filenames(args)
 
-    net = UNet(n_channels=3, n_classes=1)
+    net = UNet(n_channels=3, n_classes=19)
 
     logging.info("Loading model {}".format(args.model))
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     logging.info(f'Using device {device}')
     net.to(device=device)
     net.load_state_dict(torch.load(args.model, map_location=device))
@@ -116,7 +136,7 @@ if __name__ == "__main__":
     for i, fn in enumerate(in_files):
         logging.info("\nPredicting image {} ...".format(fn))
 
-        img = Image.open(fn)
+        img = cv2.imread(fn)
 
         mask = predict_img(net=net,
                            full_img=img,
@@ -126,7 +146,7 @@ if __name__ == "__main__":
 
         if not args.no_save:
             out_fn = out_files[i]
-            result = mask_to_image(mask)
+            result = mask_to_image(decode_segmap(mask, label_colours))
             result.save(out_files[i])
 
             logging.info("Mask saved to {}".format(out_files[i]))
