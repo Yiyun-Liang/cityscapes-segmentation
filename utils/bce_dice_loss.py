@@ -39,7 +39,7 @@ class BCEDiceLoss:
                 tflat = true[:, c,...].view(batch_size, -1)
                 intersection = (iflat * tflat).sum()
                 
-                w = self.class_weights[c]
+                w = 1.0
                 dice_loss += w * ((2. * intersection + self.smooth) /
                                  (iflat.sum() + tflat.sum() + self.smooth + self.eps))
             loss -= (1 - self.bce_weight) * torch.log(dice_loss)

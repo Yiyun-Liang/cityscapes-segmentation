@@ -86,7 +86,16 @@ class BasicDataset(Dataset):
         if self.split is not 'test':
             mask = self.encode_segmap(np.array(mask, dtype=np.uint8))
             mask_as_tensor = self.mask_transform(mask)
-            return {'image': img_as_tensor, 'mask': torch.from_numpy(np.array(mask_as_tensor)).long()}
+            mask = np.array(mask_as_tensor)
+
+            # ohe_labels = np.zeros((self.n_classes,) + mask.shape[:2])
+            # # print(ohe_labels.shape)
+            # for c in range(self.n_classes):
+            #     ys, xs = np.where(mask == c)
+            #     ohe_labels[c, ys, xs] = 1
+            # ohe_labels.astype(int)
+            # print(ohe_labels.shape)
+            return {'image': img_as_tensor, 'mask': torch.from_numpy(mask).long()}
         else:
             return {'image': img_as_tensor}
 

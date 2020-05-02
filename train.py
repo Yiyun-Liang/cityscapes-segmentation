@@ -16,6 +16,7 @@ from utils.metrics import runningScore, averageMeter
 from torch.utils.tensorboard import SummaryWriter
 from utils.dataset import BasicDataset
 from torch.utils.data import DataLoader, random_split
+from utils.bce_dice_loss import BCEDiceLoss
 
 train_dir_img = 'data/imgs/train/'
 train_dir_mask = 'data/masks/train/'
@@ -62,6 +63,7 @@ def train_net(net,
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
     if net.n_classes > 1:
         criterion = nn.CrossEntropyLoss(ignore_index=250)
+        # criterion = BCEDiceLoss()
     else:
         criterion = nn.BCEWithLogitsLoss()
 
@@ -95,7 +97,7 @@ def train_net(net,
 
                 optimizer.zero_grad()
                 loss.backward()
-                nn.utils.clip_grad_value_(net.parameters(), 0.1)
+                # nn.utils.clip_grad_value_(net.parameters(), 0.1)
                 optimizer.step()
 
                 pbar.update(imgs.shape[0])
