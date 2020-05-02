@@ -85,6 +85,7 @@ def train_net(net,
 
                 masks_pred = net(imgs)
                 # print(true_masks)
+                # print(masks_pred.data.max(1)[1].cpu().numpy())
                 # print(masks_pred.shape, true_masks.shape, true_masks.squeeze(1).shape)
                 loss = criterion(masks_pred, true_masks.squeeze(1))
                 epoch_loss += loss.item()
@@ -170,7 +171,7 @@ if __name__ == '__main__':
     #   - For 1 class and background, use n_classes=1
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
-    net = UNet(n_channels=3, n_classes=19, bilinear=True)
+    net = UNet(n_channels=3, n_classes=19, bilinear=False)
     logging.info(f'Network:\n'
                  f'\t{net.n_channels} input channels\n'
                  f'\t{net.n_classes} output channels (classes)\n'
