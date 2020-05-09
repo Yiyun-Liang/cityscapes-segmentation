@@ -125,7 +125,7 @@ def test(epoch):
     }
     torch.save(state, args.cv_dir+'/ckpt_E_%d'%(epoch))
 
-trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames, args.satellite)
+trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames)
 trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 testloader = torchdata.DataLoader(testset, batch_size=int(args.batch_size/2), shuffle=False, num_workers=args.num_workers)
 rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3*3)

@@ -9,7 +9,7 @@ import shutil
 from PIL import Image
 from random import randint, sample
 
-from data.dataloader import CustomDatasetFromImages, CustomDatasetFromVideos
+from data.dataloader import CustomDatasetFromImages, CityscapesVideos
 
 def save_args(__file__, args):
     shutil.copy(os.path.basename(__file__), args.cv_dir)
@@ -30,18 +30,7 @@ def get_transforms():
        transforms.Normalize(mean, std)
     ])
 
-    transform_train_sat = transforms.Compose([
-       transforms.Resize((128,256)),
-       transforms.ToTensor(),
-       transforms.Normalize(mean, std)
-    ])
-    transform_test_sat = transforms.Compose([
-       transforms.Resize((128,256)),
-       transforms.ToTensor(),
-       transforms.Normalize(mean, std)
-    ])
-
-    return transform_train, transform_test, transform_train_sat, transform_test_sat
+    return transform_train, transform_test
 
 class UnNormalize(object):
     def __init__(self, mean, std):
@@ -70,9 +59,9 @@ def save_images(outputs, batch_idx, out_dir):
             os.mkdir(out_dir)
         img.save('{}/{}_{}.jpg'.format(out_dir, batch_idx, file_id))
 
-def get_dataset(train_dir,  test_dir, frames, satellite_use):
-    transform_train, transform_test, transform_train_sat, transform_test_sat = get_transforms()
-    trainset = CustomDatasetFromVideos(train_dir, transform_train, transform_train_sat, frames, satellite_use)
-    testset = CustomDatasetFromVideos(test_dir, transform_test, transform_test_sat, frames, satellite_use)
+def get_dataset(train_dir,  test_dir, frames):
+    transform_train, transform_test = get_transforms()
+    trainset = CityscapesVideos(train_dir, transform_train, frames)
+    testset = CityscapesVideos(test_dir, transform_test, frames)
 
     return trainset, testset

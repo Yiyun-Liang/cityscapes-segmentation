@@ -43,8 +43,8 @@ class CustomDatasetFromImages(Dataset):
     def __len__(self):
         return self.data_len
 
-class CustomDatasetFromVideos(Dataset):
-    def __init__(self, csv_path, transform, transform_sat, frame_idxs, satellite):
+class CityscapesVideos(Dataset):
+    def __init__(self, csv_path, transform, frame_idxs):
         """
         Args:
             csv_path (string): path to csv file
@@ -56,7 +56,6 @@ class CustomDatasetFromVideos(Dataset):
         """
         # Transforms
         self.transforms = transform
-        self.transforms_sat = transform_sat
         # Read the csv file
         self.data_info = pd.read_csv(csv_path, header=None)
         # First column contains the image paths
@@ -65,25 +64,21 @@ class CustomDatasetFromVideos(Dataset):
         # Calculate len
         self.data_len = len(self.data_info.index)
         self.gt_seq_idx = 19
-        # Video details
+        # Video frames needed
         self.frame_idxs = frame_idxs
-        # Modality
-        self.satellite = satellite
-        self.path_to_satellite = '/atlas/u/buzkent/CityScapes/GoogleMaps/'
 
     def __getitem__(self, index):
         # Get image name from the pandas df
         sequence_name = self.image_arr[index]
-        first_frame_idx = int(self.seq_arr[index]) - self.gt_seq_idx
+        folder_name = sequence_name.split('/')[-1]
+        seq_id = str(self.seq_arr[index])
+        # first_frame_idx = int(self.seq_arr[index]) - self.gt_seq_idx
         img_as_tensor = []
-
-        img_as_img = Image.open('{}{}_{}.jpg'.format(self.path_to_satellite, sequence_name.split('/')[-1],
-            str(self.seq_arr[index]).zfill(6))) #.convert('L')
-        img_as_tensor.append(self.transforms_sat(img_as_img))
 
         for idx in self.frame_idxs:
             # Open image
-            single_image_name = '{}_{}_leftImg8bit.png'.format(sequence_name, str(first_frame_idx+int(idx)).zfill(6))
+            # eg. <sequence_name>/aachen_000000_000000_leftImg8bit.png
+            single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(idx).zfill(6))
             img_as_img = Image.open(single_image_name) #.convert('L')
             # Transform the image
             img_as_tensor.append(self.transforms(img_as_img))
