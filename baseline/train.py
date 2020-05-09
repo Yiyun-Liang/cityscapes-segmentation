@@ -67,6 +67,9 @@ def train_net(net,
     else:
         criterion = nn.BCEWithLogitsLoss()
 
+    global_imgs = []
+    global_truemasks = []
+    global_maskspred = []
     for epoch in range(epochs):
         net.train()
 
@@ -87,6 +90,7 @@ def train_net(net,
 
                 masks_pred = net(imgs)
                 # print(true_masks)
+                # print(true_masks.shape)
                 # print(masks_pred.data.max(1)[1].cpu().numpy())
                 # print(masks_pred.shape, true_masks.shape, true_masks.squeeze(1).shape)
                 loss = criterion(masks_pred, true_masks.squeeze(1))
@@ -104,7 +108,10 @@ def train_net(net,
                 global_step += 1
                 # if global_step % ((n_train+n_val) // (10 * batch_size)) == 0:
                 # if global_step % 5 == 0:
-        
+                global_imgs = imgs
+                global_truemasks = true_masks
+                global_maskspred = masks_pred
+
         for tag, value in net.named_parameters():
             tag = tag.replace('.', '/')
             writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
@@ -112,6 +119,8 @@ def train_net(net,
         val_score, best_iou = eval_net(net, val_loader, device, running_metrics_val, best_iou, writer, logging, epoch)
         scheduler.step(val_score)
         writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
+        writer.add_images('masks/true', global_truemasks.unsqueeze(1), global_step)
+        writer.add_images('masks/pred', global_maskspred.data.max(1)[1].unsqueeze(1).cpu().numpy(), global_step)
 
         if net.n_classes > 1:
             logging.info('Validation cross entropy: {}'.format(val_score))

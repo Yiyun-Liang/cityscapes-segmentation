@@ -17,8 +17,9 @@ class BasicDataset(Dataset):
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
         
         # mask eg. erfurt_000000_000019_gtFine_color.png
-        self.ids = [fol+'/'+splitext(file)[0].split('_leftImg8bit')[0] for fol in listdir(imgs_dir) for file in listdir(imgs_dir + fol) 
-                    if file.endswith('_leftImg8bit.png')]
+        # Ignore all files start with "."
+        self.ids = [fol+'/'+splitext(file)[0].split('_leftImg8bit')[0] for fol in listdir(imgs_dir) if not fol.startswith('.') for file in listdir(imgs_dir + fol) 
+                    if file.endswith('_leftImg8bit.png') and not file.startswith('.')]
 
         self.n_classes = 19
         self.void_classes = [0, 1, 2, 3, 4, 5, 6, 9, 10, 14, 15, 16, 18, 29, 30, -1]
@@ -50,13 +51,13 @@ class BasicDataset(Dataset):
         self.mean = [0.28689554, 0.32513303, 0.28389177]
         self.std = [0.18696375, 0.19017339, 0.18720214]
         self.img_transform = transforms.Compose([
-            transforms.Resize((128,256)),
+            transforms.Resize((256,512)),
             transforms.ToTensor(),
             transforms.Normalize(self.mean, self.std)
         ])
         self.mask_transform = transforms.Compose([
             transforms.ToPILImage(),
-            transforms.Resize((128,256), interpolation=Image.NEAREST),
+            transforms.Resize((256,512), interpolation=Image.NEAREST),
         ])
         self.augmentation = None
         self.split = split
