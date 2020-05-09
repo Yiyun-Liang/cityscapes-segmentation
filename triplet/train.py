@@ -1,10 +1,9 @@
 """
 How to Run on CityScapes Dataset:
     python3.6 train.py
-    --train_dir /atlas/u/buzkent/MMVideoPredictor/data/CityScapes/debug.csv
-    --test_dir /atlas/u/buzkent/MMVideoPredictor/data/CityScapes/debug.csv
+    --train_dir video_train_filelist.csv
+    --test_dir video_val_filelist.csv
     --frames 0 3 6 9 12
-    --satellite (Only if you want to use satellite images)
     --cv_dir ./cv/debug/
     --batch_size 8
 """
@@ -28,6 +27,8 @@ from models import PredictorNet
 from utils import utils
 from pytorch_msssim import ssim
 
+import torchvision.models as models
+
 import argparse
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
 parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
@@ -38,7 +39,6 @@ parser.add_argument('--frames', nargs='+', help='Frames to use as input and outp
 parser.add_argument('--cv_dir', default='cv/tmp/', help='checkpoint directory (models and logs are saved here)')
 parser.add_argument('--ckpt_dir', help='checkpoint directory (models and logs are saved here)')
 parser.add_argument('--batch_size', type=int, default=256, help='batch size')
-parser.add_argument('--satellite', action='store_true', help='Incorporates Satellite Image')
 parser.add_argument('--epoch_step', type=int, default=10000, help='epochs after which lr is decayed')
 parser.add_argument('--max_epochs', type=int, default=10000, help='total epochs to run')
 parser.add_argument('--num_workers', type=int, default=8, help='number of workers in training and testing')
@@ -128,7 +128,8 @@ def test(epoch):
 trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames)
 trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 testloader = torchdata.DataLoader(testset, batch_size=int(args.batch_size/2), shuffle=False, num_workers=args.num_workers)
-rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3*3)
+# rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3*3)
+rnet = = models.resnet18(pretrained=True)
 
 start_epoch = 0
 if args.ckpt_dir:
