@@ -3,7 +3,7 @@ import numpy as np
 import os
 
 
-data_dir = '/Volumes/stanford/leftImg8bit_sequence_trainvaltest/leftImg8bit_sequence/train'
+data_dir = '/ssd/leftImg8bit_sequence/train'
 
 path = []
 sequence = []
