@@ -9,7 +9,7 @@ import shutil
 from PIL import Image
 from random import randint, sample
 
-from data.dataloader import CustomDatasetFromImages, CityscapesVideos
+from dataset.dataloader import CityscapesVideos, TripletCityscapesVideos
 
 def save_args(__file__, args):
     shutil.copy(os.path.basename(__file__), args.cv_dir)
@@ -61,7 +61,7 @@ def save_images(outputs, batch_idx, out_dir):
 
 def get_dataset(train_dir,  test_dir, frames):
     transform_train, transform_test = get_transforms()
-    trainset = CityscapesVideos(train_dir, transform_train, frames)
-    testset = CityscapesVideos(test_dir, transform_test, frames)
+    trainset = TripletCityscapesVideos(train_dir, transform_train, frames)
+    testset = TripletCityscapesVideos(test_dir, transform_test, frames)
 
     return trainset, testset

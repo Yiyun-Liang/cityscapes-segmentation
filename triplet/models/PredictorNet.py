@@ -49,7 +49,7 @@ class SpatioTemporalNet(nn.Module):
         self.conv4_3D = base.conv1x1(self.feature_maps_size[3], self.feature_maps_size[3], self.strides[3])
         self.bn4_3D = nn.BatchNorm2d(self.feature_maps_size[3])
 
-        # Satellite Image Encoder
+        # Cityscapes Image Encoder #2
         self.sat_conv1_2D = base.conv3x3(self.num_in_frames, self.feature_maps_size[0], self.strides[0])
         self.sat_bn1_2D = nn.BatchNorm2d(self.feature_maps_size[0])
         self.sat_conv1_3D = base.conv1x1(self.feature_maps_size[0], self.feature_maps_size[0], self.strides[0])
@@ -97,7 +97,7 @@ class SpatioTemporalNet(nn.Module):
         self.pool = nn.AvgPool2d(2, padding=0)
 
 
-    def forward(self, x, satellite=False):
+    def forward(self, x):
         enc_x4_all = []
         # CityScapes Frames
         for frame_idx in range(1, x.shape[1], 1):
@@ -121,21 +121,20 @@ class SpatioTemporalNet(nn.Module):
         enc_x4_all = self.relu(self.bn1D_T(self.conv1D_T(enc_x4_all)))
 
         # Satellite Image
-        if satellite:
-            sat_enc_x1 = self.relu(self.sat_bn1_2D(self.sat_conv1_2D(x[:, 0, :, :, :])))
-            sat_enc_x1 = self.pool(self.relu(self.sat_bn1_3D(self.sat_conv1_3D(sat_enc_x1))))
+        sat_enc_x1 = self.relu(self.sat_bn1_2D(self.sat_conv1_2D(x[:, 0, :, :, :])))
+        sat_enc_x1 = self.pool(self.relu(self.sat_bn1_3D(self.sat_conv1_3D(sat_enc_x1))))
 
-            sat_enc_x2 = self.relu(self.sat_bn2_2D(self.sat_conv2_2D(sat_enc_x1)))
-            sat_enc_x2 = self.pool(self.relu(self.sat_bn2_3D(self.sat_conv2_3D(sat_enc_x2))))
+        sat_enc_x2 = self.relu(self.sat_bn2_2D(self.sat_conv2_2D(sat_enc_x1)))
+        sat_enc_x2 = self.pool(self.relu(self.sat_bn2_3D(self.sat_conv2_3D(sat_enc_x2))))
 
-            sat_enc_x3 = self.relu(self.sat_bn3_2D(self.sat_conv3_2D(sat_enc_x2)))
-            sat_enc_x3 = self.pool(self.relu(self.sat_bn3_3D(self.sat_conv3_3D(sat_enc_x3))))
+        sat_enc_x3 = self.relu(self.sat_bn3_2D(self.sat_conv3_2D(sat_enc_x2)))
+        sat_enc_x3 = self.pool(self.relu(self.sat_bn3_3D(self.sat_conv3_3D(sat_enc_x3))))
 
-            sat_enc_x4 = self.relu(self.sat_bn4_2D(self.sat_conv4_2D(sat_enc_x3)))
-            weights = F.adaptive_avg_pool2d(sat_enc_x4, (1, 1))
+        sat_enc_x4 = self.relu(self.sat_bn4_2D(self.sat_conv4_2D(sat_enc_x3)))
+        weights = F.adaptive_avg_pool2d(sat_enc_x4, (1, 1))
 
-            # Fusion
-            enc_x4_all = enc_x4_all*weights
+        # Fusion
+        enc_x4_all = enc_x4_all*weights
 
         # Decoder
         dec_x3 = self.relu(self.bn5_2D(self.dconv1_2D(enc_x4_all)))
