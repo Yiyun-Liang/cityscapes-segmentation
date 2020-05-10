@@ -69,10 +69,10 @@ class TripletCityscapesVideos(Dataset):
         # Transforms
         self.transforms = transform
         # Read the csv file
-        self.data_info = pd.read_csv(csv_path, header=None)
+        self.data_info = pd.read_csv(csv_path, header=0)
         # First column contains the image paths
-        self.image_arr = np.asarray(self.data_info.iloc[:, 0])
-        self.seq_arr = np.asarray(self.data_info.iloc[:, 1])
+        self.image_arr = np.asarray(self.data_info['path'])
+        self.seq_arr = np.asarray(self.data_info['sequence'])
         # Calculate len
         self.data_len = len(self.data_info.index)
         self.gt_seq_idx = 19
@@ -91,23 +91,23 @@ class TripletCityscapesVideos(Dataset):
         single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(anchor).zfill(6))
         img_as_img = Image.open(single_image_name) #.convert('L')
         # Transform the image
-        img_as_tensor.append(self.transforms(img_as_img))
+        anchor_img = self.transforms(img_as_img)
 
         pos_range = np.concatenate((np.arange(np.maximum(anchor-3, 0), anchor-1), \
                                     np.arange(anchor+1, np.minimum(anchor+3, 29))))
         positive = np.random.choice(pos_range)
         single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(positive).zfill(6))
         img_as_img = Image.open(single_image_name) #.convert('L')
-        img_as_tensor.append(self.transforms(img_as_img))
+        pos = self.transforms(img_as_img)
 
         neg_range = np.concatenate((np.arange(0, anchor-10), \
                                     np.arange(anchor+10, 29)))
         negative = np.random.choice(neg_range)
         single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(negative).zfill(6))
         img_as_img = Image.open(single_image_name) #.convert('L')
-        img_as_tensor.append(self.transforms(img_as_img))
+        neg = self.transforms(img_as_img)
 
-        return torch.stack(img_as_tensor, dim=0)
+        return (anchor_img, pos, neg)
 
     def __len__(self):
         return self.data_len

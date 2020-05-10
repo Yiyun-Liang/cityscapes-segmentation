@@ -1,6 +1,18 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
+class Classification(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(ExpandChannel, self).__init__()
+        self.conv = nn.Conv3d(in_channels, out_channels, kernel_size=1)
+        self.bn = nn.BatchNorm2d(out_channels)
+
+    def forward(self, x):
+        x = x.transpose(1, 2) # BxCxDxHxW
+        x = self.conv(x)
+        x = x.squeeze(1)
+        x = self.bn(x)
+        return x
 
 class EmbeddingNet(nn.Module):
     def __init__(self):

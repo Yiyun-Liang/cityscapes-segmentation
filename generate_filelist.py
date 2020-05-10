@@ -15,7 +15,7 @@ for folder in os.listdir(data_dir):
 			seq = int(image[len(folder+'_'):len(folder+'_')+6])
 			seqs.add(seq)
 		for seq in seqs:
-			path.append(data_dir+'/'+folder)
+			path.append(cur)
 			sequence.append(seq)
 
 

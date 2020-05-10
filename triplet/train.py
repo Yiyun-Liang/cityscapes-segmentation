@@ -27,7 +27,7 @@ from models import PredictorNet
 from utils import utils
 # from pytorch_msssim import ssim
 from utils.losses import TripletLoss
-from models.networks import SimulatedTripletNet
+from models.networks import TripletNet, Classification
 
 import torchvision.models as models
 
@@ -57,19 +57,23 @@ def train(epoch, device):
     matches, losses = [], []
     for batch_idx, inputs in tqdm.tqdm(enumerate(trainloader), total=len(trainloader)):
 
-        if not args.parallel:
-            inputs = inputs.to(device)
 
         # targets = torch.tanh(torch.cat((inputs[:, inputs.shape[1]-3, :, :, :],inputs[:, inputs.shape[1]-2, :, :, :],inputs[:, inputs.shape[1]-1, :, :, :]), dim=1))
         # inputs = inputs[:, :inputs.shape[1]-3, :, :, :]
-        v_inputs = inputs.data
+        # v_inputs = inputs.data
+        anchor, pos, neg = inputs
+        print(anchor.shape)
+        if not args.parallel:
+            anchor = anchor.to(device)
+            pos = pos.to(device)
+            neg = neg.to(device)
 
-        out = triplet_net(v_inputs)
-        print(out.shape) # BxNxHxW
+        out1, out2, out3 = triplet_net(anchor, pos, neg)
+        print(out1.shape) # BxNxHxW
         # calculate loss over features
         # pick k negative samples from the batch to calculate loss on
         # then calculate grad on them
-        loss = triplet_loss(out[:,0,:,:], out[:,1,:,:], out[:,2,:,:])
+        loss = triplet_loss(out1, out2, out3)
         # criterion2 = ssim(preds[:,6:9,:,:], targets[:,6:9,:,:], data_range=targets.max()-targets.min())
         # loss = criterion1
 
@@ -132,7 +136,7 @@ else:
 # rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3*3)
 rnet = models.resnet18(pretrained=True)
 rnet = nn.Sequential(*list(rnet.children())[:-1]).to(device)
-triplet_net = SimulatedTripletNet(rnet).to(device)
+triplet_net = TripletNet(rnet).to(device)
 
 # losses
 triplet_loss = TripletLoss(margin=1.0).to(device)
