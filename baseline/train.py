@@ -47,7 +47,7 @@ def train_net(net,
     global_step = 0
 
     best_iou = -100.0
-    running_metrics_val = runningScore(net.n_classes)
+    running_metrics_val = runningScore(19)
 
     logging.info(f'''Starting training:
         Epochs:          {epochs}
@@ -185,11 +185,7 @@ if __name__ == '__main__':
     #   - For N > 2 classes, use n_classes=N
     # net = UNet(n_channels=3, n_classes=19, bilinear=False)
     net = resnet101(pretrained=False, num_classes=19) # baseline
-    logging.info(f'Network:\n'
-                 f'\t{net.n_channels} input channels\n'
-                 f'\t{net.n_classes} output channels (classes)\n'
-                 f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
-
+    
     if args.load:
         net.load_state_dict(
             torch.load(args.load, map_location=device)
