@@ -80,10 +80,10 @@ def train_net(net,
                 imgs = batch['image']
                 true_masks = batch['mask']
                 #print(true_masks.shape)
-                assert imgs.shape[1] == net.n_channels, \
-                    f'Network has been defined with {net.n_channels} input channels, ' \
-                    f'but loaded images have {imgs.shape[1]} channels. Please check that ' \
-                    'the images are loaded correctly.'
+                # assert imgs.shape[1] == net.n_channels, \
+                #     f'Network has been defined with {net.n_channels} input channels, ' \
+                #     f'but loaded images have {imgs.shape[1]} channels. Please check that ' \
+                #     'the images are loaded correctly.'
 
                 imgs = imgs.to(device=device, dtype=torch.float32)
                 mask_type = torch.float32 if net.n_classes == 1 else torch.long

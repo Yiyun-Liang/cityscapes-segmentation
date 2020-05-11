@@ -138,7 +138,7 @@ class ResNet(nn.Module):
 
     def __init__(self, block, layers, num_classes, num_groups=None, weight_std=False, beta=False):
         self.inplanes = 64
-        self.n_classes = 19
+        self.n_classes = num_classes
         self.norm = lambda planes, momentum=0.05: nn.BatchNorm2d(planes, momentum=momentum) if num_groups is None else nn.GroupNorm(num_groups, planes)
         self.conv = Conv2d if weight_std else nn.Conv2d
 
