@@ -95,6 +95,7 @@ def train(epoch, device):
     print(log_str)
 
 def test(epoch, device):
+    global best_loss
     triplet_net.eval()
     l1, ssim_loss = [], []
     matches, losses = [], []

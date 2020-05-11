@@ -64,13 +64,13 @@ def train_net(net,
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
     elif args.arch == 'resnet101':
         backbone_params = (
-            list(net.module.conv1.parameters()) +
-            list(net.module.bn1.parameters()) +
-            list(net.module.layer1.parameters()) +
-            list(net.module.layer2.parameters()) +
-            list(net.module.layer3.parameters()) +
-            list(net.module.layer4.parameters()))
-        last_params = list(net.module.aspp.parameters())
+            list(net.conv1.parameters()) +
+            list(net.bn1.parameters()) +
+            list(net.layer1.parameters()) +
+            list(net.layer2.parameters()) +
+            list(net.layer3.parameters()) +
+            list(net.layer4.parameters()))
+        last_params = list(net.aspp.parameters())
         optimizer = optim.SGD([
           {'params': filter(lambda p: p.requires_grad, backbone_params)},
           {'params': filter(lambda p: p.requires_grad, last_params)}],
