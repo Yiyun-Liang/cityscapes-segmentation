@@ -47,7 +47,7 @@ def train_net(net,
     global_step = 0
 
     best_iou = -100.0
-    running_metrics_val = runningScore(19)
+    running_metrics_val = runningScore(net.n_classes)
 
     logging.info(f'''Starting training:
         Epochs:          {epochs}
