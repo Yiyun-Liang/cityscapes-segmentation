@@ -98,17 +98,18 @@ def test(epoch, device):
     triplet_net.eval()
     l1, ssim_loss = [], []
     matches, losses = [], []
-    for batch_idx, inputs in tqdm.tqdm(enumerate(testloader), total=len(testloader)):
+    with torch.no_grad():
+        for batch_idx, inputs in tqdm.tqdm(enumerate(testloader), total=len(testloader)):
 
-        anchor, pos, neg = inputs
-        if not args.parallel:
-            anchor = anchor.to(device)
-            pos = pos.to(device)
-            neg = neg.to(device)
+            anchor, pos, neg = inputs
+            if not args.parallel:
+                anchor = anchor.to(device)
+                pos = pos.to(device)
+                neg = neg.to(device)
 
-        out1, out2, out3 = triplet_net(anchor, pos, neg)
-        loss = triplet_loss(out1, out2, out3)
-        losses.append(loss.cpu())
+            out1, out2, out3 = triplet_net(anchor, pos, neg)
+            loss = triplet_loss(out1, out2, out3)
+            losses.append(loss.cpu())
 
     loss = torch.stack(losses).mean()
 
