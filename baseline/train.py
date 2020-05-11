@@ -59,9 +59,24 @@ def train_net(net,
         Device:          {device.type}
         Images scaling:  {img_scale}
     ''')
+    if args.arch == 'unet':
+        optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
+    elif args.arch == 'resnet101':
+        backbone_params = (
+            list(net.module.conv1.parameters()) +
+            list(net.module.bn1.parameters()) +
+            list(net.module.layer1.parameters()) +
+            list(net.module.layer2.parameters()) +
+            list(net.module.layer3.parameters()) +
+            list(net.module.layer4.parameters()))
+        last_params = list(net.module.aspp.parameters())
+        optimizer = optim.SGD([
+          {'params': filter(lambda p: p.requires_grad, backbone_params)},
+          {'params': filter(lambda p: p.requires_grad, last_params)}],
+          lr=args.lr, momentum=0.9, weight_decay=0.0001)
+        max_iter = epochs * len(train_loader)
 
-    optimizer = optim.RMSprop(net.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min' if net.n_classes > 1 else 'max', patience=2)
     if net.n_classes > 1:
         criterion = nn.CrossEntropyLoss(ignore_index=250)
         # criterion = BCEDiceLoss()
@@ -76,7 +91,12 @@ def train_net(net,
 
         epoch_loss = 0
         with tqdm(total=n_train, desc=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
-            for batch in train_loader:
+            for i, batch in enumerate(train_loader):
+                cur_iter = epoch * len(train_loader) + i
+                lr = args.lr * (1 - float(cur_iter) / max_iter) ** 0.9
+                optimizer.param_groups[0]['lr'] = lr
+                optimizer.param_groups[1]['lr'] = lr * 1.0
+
                 imgs = batch['image']
                 true_masks = batch['mask']
                 #print(true_masks.shape)
@@ -118,7 +138,9 @@ def train_net(net,
             writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
             writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
         val_score, best_iou = eval_net(net, val_loader, device, running_metrics_val, best_iou, writer, logging, epoch)
-        scheduler.step(val_score)
+        if args.arch == 'unet':
+            scheduler.step(val_score)
+
         writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
         writer.add_images('masks/true', global_truemasks.unsqueeze(1), global_step)
         writer.add_images('masks/pred', global_maskspred.data.max(1)[1].unsqueeze(1).cpu().numpy(), global_step)
@@ -163,6 +185,8 @@ def get_args():
                         help='Downscaling factor of the images')
     parser.add_argument('-v', '--validation', dest='val', type=float, default=10.0,
                         help='Percent of the data that is used as validation (0-100)')
+    parser.add_argument('-a', '--arch', dest='arch', type=str, default='resnet101',
+                        help='architecture to train model on')
 
     return parser.parse_args()
 
@@ -183,8 +207,10 @@ if __name__ == '__main__':
     #   - For 1 class and background, use n_classes=1
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
-    # net = UNet(n_channels=3, n_classes=19, bilinear=False)
-    net = resnet101(pretrained=False, num_classes=19) # baseline
+    if args.arch == 'unet':
+        net = UNet(n_channels=3, n_classes=19, bilinear=False)
+    elif args.arch == 'resnet101':
+        net = resnet101(pretrained=False, num_classes=19) # baseline
     
     if args.load:
         net.load_state_dict(
