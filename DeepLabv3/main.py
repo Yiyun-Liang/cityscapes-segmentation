@@ -161,28 +161,28 @@ def main():
 
     inter_meter = AverageMeter()
     union_meter = AverageMeter()
-    
-    for i in range(len(dataset)):
-      inputs, target = dataset[i]
-      inputs = Variable(inputs.cuda())
-      outputs = model(inputs.unsqueeze(0))
-      _, pred = torch.max(outputs, 1)
-      pred = pred.data.cpu().numpy().squeeze().astype(np.uint8)
-      mask = target.numpy().astype(np.uint8)
-      imname = dataset.masks[i].split('/')[-1]
-      mask_pred = Image.fromarray(pred)
-      mask_pred.putpalette(cmap)
-      mask_pred.save(os.path.join('data/val', imname))
-      print('eval: {0}/{1}'.format(i + 1, len(dataset)))
+    with torch.no_grad():
+      for i in range(len(dataset)):
+        inputs, target = dataset[i]
+        inputs = Variable(inputs.cuda())
+        outputs = model(inputs.unsqueeze(0))
+        _, pred = torch.max(outputs, 1)
+        pred = pred.data.cpu().numpy().squeeze().astype(np.uint8)
+        mask = target.numpy().astype(np.uint8)
+        imname = dataset.masks[i].split('/')[-1]
+        mask_pred = Image.fromarray(pred)
+        mask_pred.putpalette(cmap)
+        mask_pred.save(os.path.join('data/val', imname))
+        print('eval: {0}/{1}'.format(i + 1, len(dataset)))
 
-      inter, union = inter_and_union(pred, mask, len(dataset.CLASSES))
-      inter_meter.update(inter)
-      union_meter.update(union)
+        inter, union = inter_and_union(pred, mask, len(dataset.CLASSES))
+        inter_meter.update(inter)
+        union_meter.update(union)
 
-    iou = inter_meter.sum / (union_meter.sum + 1e-10)
-    for i, val in enumerate(iou):
-      print('IoU {0}: {1:.2f}'.format(dataset.CLASSES[i], val * 100))
-    print('Mean IoU: {0:.2f}'.format(iou.mean() * 100))
+      iou = inter_meter.sum / (union_meter.sum + 1e-10)
+      for i, val in enumerate(iou):
+        print('IoU {0}: {1:.2f}'.format(dataset.CLASSES[i], val * 100))
+      print('Mean IoU: {0:.2f}'.format(iou.mean() * 100))
 
 
 if __name__ == "__main__":
