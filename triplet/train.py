@@ -101,12 +101,12 @@ def test(epoch, device):
     for batch_idx, inputs in tqdm.tqdm(enumerate(testloader), total=len(testloader)):
 
         if not args.parallel:
-            inputs = inputs.to(device)
+            anchor = anchor.to(device)
+            pos = pos.to(device)
+            neg = neg.to(device)
 
-        v_inputs = inputs.data
-
-        out = triplet_net(v_inputs)
-        loss = triplet_loss(out[:,0,:,:], out[:,1,:,:], out[:,2,:,:])
+        out1, out2, out3 = triplet_net(anchor, pos, neg)
+        loss = triplet_loss(out1, out2, out3)
         losses.append(loss.cpu())
 
     loss = torch.stack(losses).mean()
@@ -116,11 +116,10 @@ def test(epoch, device):
     print(log_str)
     rnet_state_dict = rnet.module.state_dict() if args.parallel else rnet.state_dict()
 
-    state = {
-      'rnet': rnet_state_dict,
-      'epoch': epoch,
-    }
-    torch.save(state, args.cv_dir+'/ckpt_E_%d'%(epoch))
+    torch.save(rnet_state_dict, args.cv_dir+'/ckpt_E_%d.pth'%(epoch))
+    if loss < best_loss:
+        torch.save(rnet_state_dict, args.cv_dir+'/best_loss.pth')
+        best_loss = loss
 
 trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames)
 trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
@@ -134,14 +133,15 @@ else:
     device = torch.device("cpu")
 
 # rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3*3)
-rnet = models.resnet101()
-rnet = nn.Sequential(*list(rnet.children())[:-1]).to(device)
+rnet = models.resnet101().to(device)
+# rnet = nn.Sequential(*list(rnet.children())[:-1]).to(device)
 triplet_net = TripletNet(rnet).to(device)
 
 # losses
 triplet_loss = TripletLoss(margin=1.0).to(device)
 
 start_epoch = 0
+best_loss = 1000
 if args.ckpt_dir:
     ckpt = torch.load(args.ckpt_dir)
     rnet.load_state_dict(ckpt['rnet'])
