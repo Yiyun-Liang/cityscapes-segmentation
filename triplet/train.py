@@ -34,9 +34,9 @@ import torchvision.models as models
 import argparse
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
 parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
-parser.add_argument('--data_dir', default='data/', help= 'data directory')
-parser.add_argument('--train_dir', default='data/', help='training data directory')
-parser.add_argument('--test_dir', default='data/', help='test data directory')
+parser.add_argument('--data_dir', default='/ssd/leftImg8bit_sequence', help= 'data directory')
+parser.add_argument('--train_dir', default='../video_train_filelist.csv', help='training data directory')
+parser.add_argument('--test_dir', default='../video_val_filelist.csv', help='test data directory')
 parser.add_argument('--frames', nargs='+', help='Frames to use as input and output', required=False)
 parser.add_argument('--cv_dir', default='cv/tmp/', help='checkpoint directory (models and logs are saved here)')
 parser.add_argument('--ckpt_dir', help='checkpoint directory (models and logs are saved here)')
@@ -62,14 +62,14 @@ def train(epoch, device):
         # inputs = inputs[:, :inputs.shape[1]-3, :, :, :]
         # v_inputs = inputs.data
         anchor, pos, neg = inputs
-        print(anchor.shape)
+
         if not args.parallel:
             anchor = anchor.to(device)
             pos = pos.to(device)
             neg = neg.to(device)
 
         out1, out2, out3 = triplet_net(anchor, pos, neg)
-        print(out1.shape) # BxNxHxW
+        # print(out1.shape) # BxNxHxW
         # calculate loss over features
         # pick k negative samples from the batch to calculate loss on
         # then calculate grad on them
@@ -134,7 +134,7 @@ else:
     device = torch.device("cpu")
 
 # rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3*3)
-rnet = models.resnet18(pretrained=True)
+rnet = models.resnet101()
 rnet = nn.Sequential(*list(rnet.children())[:-1]).to(device)
 triplet_net = TripletNet(rnet).to(device)
 
