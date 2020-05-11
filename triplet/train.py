@@ -100,6 +100,7 @@ def test(epoch, device):
     matches, losses = [], []
     for batch_idx, inputs in tqdm.tqdm(enumerate(testloader), total=len(testloader)):
 
+        anchor, pos, neg = inputs
         if not args.parallel:
             anchor = anchor.to(device)
             pos = pos.to(device)
