@@ -17,11 +17,12 @@ from torch.utils.tensorboard import SummaryWriter
 from utils.dataset import BasicDataset
 from torch.utils.data import DataLoader, random_split
 from utils.bce_dice_loss import BCEDiceLoss
+from deeplab.deeplab import resnet101
 
-train_dir_img = 'data/imgs/train/'
-train_dir_mask = 'data/masks/train/'
-val_dir_img = 'data/imgs/val/'
-val_dir_mask = 'data/masks/val/'
+train_dir_img = '/ssd/leftImg8bit/train/'
+train_dir_mask = '/ssd/gtFine/train/'
+val_dir_img = '/ssd/leftImg8bit/val/'
+val_dir_mask = '/ssd/gtFine/val/'
 dir_checkpoint = 'checkpoints/'
 
 
@@ -182,7 +183,8 @@ if __name__ == '__main__':
     #   - For 1 class and background, use n_classes=1
     #   - For 2 classes, use n_classes=1
     #   - For N > 2 classes, use n_classes=N
-    net = UNet(n_channels=3, n_classes=19, bilinear=False)
+    # net = UNet(n_channels=3, n_classes=19, bilinear=False)
+    net = resnet101(pretrained=False, num_classes=19) # baseline
     logging.info(f'Network:\n'
                  f'\t{net.n_channels} input channels\n'
                  f'\t{net.n_classes} output channels (classes)\n'
