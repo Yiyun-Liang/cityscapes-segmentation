@@ -25,11 +25,13 @@ class CityscapesVideos(Dataset):
         # Read the csv file
         self.data_info = pd.read_csv(csv_path, header=None)
         # First column contains the image paths
-        self.image_arr = np.asarray(self.data_info.iloc[:, 0])
-        self.seq_arr = np.asarray(self.data_info.iloc[:, 1])
+        self.image_arr = np.asarray(self.data_info['path'])
+        self.seq_arr = np.asarray(self.data_info['sequence'])
+        self.start_frames = np.asarray(self.data_info['start'])
+        self.end_frames = np.asarray(self.data_info['end'])
+        self.annotated_frames = np.asarray(self.data_info['annotation'])
         # Calculate len
         self.data_len = len(self.data_info.index)
-        self.gt_seq_idx = 19
         # Video frames needed
         self.frame_idxs = frame_idxs
 
@@ -38,7 +40,6 @@ class CityscapesVideos(Dataset):
         sequence_name = self.image_arr[index]
         folder_name = sequence_name.split('/')[-1]
         seq_id = str(self.seq_arr[index])
-        # first_frame_idx = int(self.seq_arr[index]) - self.gt_seq_idx
         img_as_tensor = []
 
         for idx in self.frame_idxs:
@@ -73,9 +74,11 @@ class TripletCityscapesVideos(Dataset):
         # First column contains the image paths
         self.image_arr = np.asarray(self.data_info['path'])
         self.seq_arr = np.asarray(self.data_info['sequence'])
+        self.start_frames = np.asarray(self.data_info['start'])
+        self.end_frames = np.asarray(self.data_info['end'])
+        self.annotated_frames = np.asarray(self.data_info['annotation'])
         # Calculate len
         self.data_len = len(self.data_info.index)
-        self.gt_seq_idx = 19
         # Video frames needed
         self.frame_idxs = frame_idxs
 
@@ -84,24 +87,27 @@ class TripletCityscapesVideos(Dataset):
         sequence_name = self.image_arr[index]
         folder_name = sequence_name.split('/')[-1]
         seq_id = str(self.seq_arr[index])
-        # first_frame_idx = int(self.seq_arr[index]) - self.gt_seq_idx
         img_as_tensor = []
 
-        anchor = np.random.randint(low=0, high=30)
+        start_frame = self.start_frames[index]
+        end_frame = self.end_frames[index]
+        annotated_frame = self.annotated_frames[index]
+
+        anchor = np.random.randint(low=start_frame, high=end_frame+1)
         single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(anchor).zfill(6))
         img_as_img = Image.open(single_image_name) #.convert('L')
         # Transform the image
         anchor_img = self.transforms(img_as_img)
 
-        pos_range = np.concatenate((np.arange(np.maximum(anchor-3, 0), anchor-1), \
-                                    np.arange(anchor+1, np.minimum(anchor+3, 29))))
+        pos_range = np.concatenate((np.arange(np.maximum(anchor-3, start_frame), anchor-1), \
+                                    np.arange(anchor+1, np.minimum(anchor+3, end_frame))))
         positive = np.random.choice(pos_range)
         single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(positive).zfill(6))
         img_as_img = Image.open(single_image_name) #.convert('L')
         pos = self.transforms(img_as_img)
 
-        neg_range = np.concatenate((np.arange(0, anchor-10), \
-                                    np.arange(anchor+10, 29)))
+        neg_range = np.concatenate((np.arange(start_frame, anchor-10), \
+                                    np.arange(anchor+10, end_frame)))
         negative = np.random.choice(neg_range)
         single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(negative).zfill(6))
         img_as_img = Image.open(single_image_name) #.convert('L')
