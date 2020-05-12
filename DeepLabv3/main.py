@@ -142,7 +142,7 @@ def main():
               'loss: {loss.val:.4f} ({loss.ema:.4f})'.format(
               epoch + 1, i + 1, len(dataset_loader), lr, loss=losses))
 
-      if epoch % 10 == 9:
+      if (epoch+1) % 5 == 0:
         torch.save({
           'epoch': epoch + 1,
           'state_dict': model.state_dict(),
