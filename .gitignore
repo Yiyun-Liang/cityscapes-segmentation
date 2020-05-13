@@ -5,8 +5,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 */cv/*
-
+*.pth
 *.DS_Store
+*_log
 # C extensions
 *.so
 runs/
