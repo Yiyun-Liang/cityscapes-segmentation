@@ -1,3 +1,5 @@
+# code based on https://github.com/adambielski/siamese-triplet/blob/master/networks.py
+
 import torch.nn as nn
 import torch.nn.functional as F
 

@@ -1,3 +1,5 @@
+# code based on https://github.com/adambielski/siamese-triplet/blob/master/losses.py
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

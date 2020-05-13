@@ -1,5 +1,9 @@
 # DeepLabv3.pytorch
 
+Train with `python main.py --train --dataset cityscapes --exp lr1e-2_crop769_batch20_lastmult10_scratch --epochs 480 --base_lr 0.01 --crop_size 769 --batch_size 5 --last_mult 10`
+
+Test with `python main.py --dataset cityscapes --epochs 100 --crop_size 769 --exp lr1e-2_crop769_batch20_lastmult10_scratch`
+
 This is a PyTorch implementation of [DeepLabv3](https://arxiv.org/abs/1706.05587) that aims to reuse the [resnet implementation in torchvision](https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py) as much as possible. This means we use the [PyTorch model checkpoint](https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py#L13) when finetuning from ImageNet, instead of [the one provided in TensorFlow](https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/model_zoo.md).
 
 We try to match every detail in DeepLabv3, except that Multi-Grid other than (1, 1, 1) is not yet supported. On PASCAL VOC 2012 validation set, using the same hyperparameters, we reproduce the performance reported in the paper (GPU with 16GB memory is required). We also support the combination of Group Normalization + Weight Standardization:
