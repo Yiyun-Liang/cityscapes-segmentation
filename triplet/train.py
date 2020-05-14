@@ -124,6 +124,20 @@ def test(epoch, device):
         torch.save(rnet_state_dict, args.cv_dir+'/best_loss.pth')
         best_loss = loss
 
+def adjust_learning_rate(optimizer, epoch, args):
+    """Decay the learning rate based on schedule"""
+    for param_group in optimizer.param_groups:
+        # param_group['lr'] = args.lr * (0.1 ** (epoch // 10))
+        if epoch < 5:  # warm-up
+            if epoch == 0:
+                lr = param_group['lr'] * (float(epoch + 1) / 5)
+            else:
+                lr = param_group['lr'] * (float(epoch + 1) / 5) / (float(epoch) / 5)
+        else:
+            if epoch // 30 == 0:
+                lr = param_group['lr'] * 0.1
+        param_group["lr"] = lr
+
 trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames)
 trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 testloader = torchdata.DataLoader(testset, batch_size=int(args.batch_size/2), shuffle=False, num_workers=args.num_workers)
@@ -159,6 +173,7 @@ triplet_net.to(device)
 configure(args.cv_dir+'/log', flush_secs=5)
 optimizer = optim.Adam(triplet_net.parameters(), lr=args.lr)
 for epoch in range(start_epoch, start_epoch+args.max_epochs+1):
+    adjust_learning_rate(optimizer, epoch, args)
     train(epoch, device)
     if epoch % 5 == 0:
         test(epoch, device)
