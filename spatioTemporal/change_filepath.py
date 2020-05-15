@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 
-split = 'test'
+split = 'train'
 data_dir = '/media/lmy'
 csv_dir = '../' + 'video_{}_filelist.csv'.format(split)
 

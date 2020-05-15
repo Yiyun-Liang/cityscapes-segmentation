@@ -37,7 +37,7 @@ parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
 parser.add_argument('--data_dir', default='data/', help= 'data directory')
 parser.add_argument('--train_dir', default='data/', help='training data directory')
 parser.add_argument('--test_dir', default='data/', help='test data directory')
-parser.add_argument('--frames', nargs='+', help='Frames to use as input and output', required=True)
+parser.add_argument('--frames', nargs='+', help='Frames to use as input and output', required=False)
 parser.add_argument('--cv_dir', default='cv/tmp/', help='checkpoint directory (models and logs are saved here)')
 parser.add_argument('--ckpt_dir', help='checkpoint directory (models and logs are saved here)')
 parser.add_argument('--batch_size', type=int, default=8, help='batch size')
@@ -68,7 +68,6 @@ def train(epoch):
         predicted_label = temporal_net(frame1, frame2, frame3)
         loss = criterion(predicted_label, label)
 
-
         #l1.append(criterion1.cpu())
         #ssim_loss.append(criterion2.detach().cpu())
         losses.append(loss.cpu())
@@ -76,6 +75,8 @@ def train(epoch):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+        #print('target label: {}, predicted_label: {}'.format(label.cpu(), predicted_label.cpu()))
 
     loss = torch.stack(losses).mean()
     #l1_loss = torch.stack(l1).mean()

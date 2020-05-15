@@ -72,7 +72,7 @@ def save_images(outputs, batch_idx, out_dir):
 
 def get_dataset(train_dir,  test_dir, frames):
     transform_train, transform_test, transform_train_sat, transform_test_sat = get_transforms()
-    trainset = TemporalVideoDataset(train_dir, transform_train, frames, 30000)
-    testset = TemporalVideoDataset(test_dir, transform_test, frames, 6000)
+    trainset = TemporalVideoDataset(train_dir, transform_train, frames)
+    testset = TemporalVideoDataset(test_dir, transform_test, frames)
 
     return trainset, testset
