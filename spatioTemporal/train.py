@@ -33,7 +33,7 @@ import torchvision.models as models
 
 import argparse
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
-parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
+parser.add_argument('--lr', type=float, default=1e-2, help='learning rate')
 parser.add_argument('--data_dir', default='data/', help= 'data directory')
 parser.add_argument('--train_dir', default='data/', help='training data directory')
 parser.add_argument('--test_dir', default='data/', help='test data directory')
@@ -123,6 +123,10 @@ def test(epoch):
         torch.save(rnet_state_dict, args.cv_dir+'/best_loss.pth')
         best_loss = loss
 
+def adjust_learning_rate(epoch, args):
+    """Decay the learning rate based on schedule"""
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = args.lr * (0.1 ** (epoch // 10))
 
 trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames)
 trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
@@ -155,10 +159,11 @@ best_loss = 1000
 
 # Save the configuration to the output directory
 configure(args.cv_dir+'/log', flush_secs=5)
-optimizer = optim.Adam(temporal_net.parameters(), lr=args.lr)
+optimizer = optim.SGD(temporal_net.parameters(), lr=args.lr)
 criterion = nn.CrossEntropyLoss()
 for epoch in range(start_epoch, start_epoch+args.max_epochs+1):
     print('Start training epoch {}'.format(epoch))
+    adjust_learning_rate(epoch, args)
     train(epoch)
     if epoch % 5 == 0:
         test(epoch)

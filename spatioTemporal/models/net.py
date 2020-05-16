@@ -8,13 +8,15 @@ class TemporalNet(nn.Module):
     def __init__(self, embedding_net, feature_size, img_len):
         super(TemporalNet, self).__init__()
         self.img_len = img_len
-        self.num_classes = math.factorial(img_len)
+        #self.num_classes = math.factorial(img_len)
+        # predict the central frame
+        self.num_classes = img_len
         self.feature_size = feature_size
 
         self.feature_extractor = embedding_net
         self.classifier = nn.Linear(self.feature_size* self.img_len, self.num_classes)
-        #self.relu = nn.ReLU(inplace=True)
-        self.softmax = nn.Softmax(dim=1)
+        nn.init.kaiming_uniform_(self.classifier.weight)
+        #self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x1, x2, x3):
         output1 = self.feature_extractor(x1)
@@ -27,9 +29,7 @@ class TemporalNet(nn.Module):
         # dim = 1: see https://github.com/xudejing/video-clip-order-prediction
         features = torch.cat([output1, output2, output3], dim=1)
         x = self.classifier(features)
-        #x = self.relu(x)
-        #print(x.shape)
-        x = self.softmax(x)
+        #x = self.softmax(x)
         
         return x
 
