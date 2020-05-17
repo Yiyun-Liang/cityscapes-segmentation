@@ -97,7 +97,7 @@ class TripletCityscapesVideos(Dataset):
         end_frame = self.end_frames[index]
         annotated_frame = self.annotated_frames[index]
 
-        if test:
+        if self.is_test:
             anchor = start_frame
         else:
             anchor = np.random.randint(low=start_frame, high=end_frame+1)
@@ -106,7 +106,7 @@ class TripletCityscapesVideos(Dataset):
         # Transform the image
         anchor_img = self.transforms(img_as_img)
         
-        if test:
+        if self.is_test:
             positive = start_frame+2
         else:
             pos_range = np.concatenate((np.arange(np.maximum(anchor-3, start_frame), anchor-1), \
@@ -116,7 +116,7 @@ class TripletCityscapesVideos(Dataset):
         img_as_img = Image.open(single_image_name) #.convert('L')
         pos = self.transforms(img_as_img)
 
-        if test:
+        if self.is_test:
             negative = start_frame+10
         else:
             neg_range = np.concatenate((np.arange(start_frame, anchor-10), \
