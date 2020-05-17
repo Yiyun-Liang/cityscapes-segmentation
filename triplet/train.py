@@ -136,6 +136,8 @@ def adjust_learning_rate(optimizer, epoch, args):
         else:
             if epoch // 30 == 0:
                 lr = param_group['lr'] * 0.1
+            else:
+                lr = param_group['lr']
         param_group["lr"] = lr
 
 trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames)
@@ -150,7 +152,7 @@ else:
     device = torch.device("cpu")
 
 # rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3*3)
-rnet = models.resnet101()
+rnet = models.resnet101(pretrained=True)
 # rnet = nn.Sequential(*list(rnet.children())[:-1]).to(device)
 triplet_net = TripletNet(rnet)
 

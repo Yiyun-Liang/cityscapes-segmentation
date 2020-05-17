@@ -117,12 +117,28 @@ def test(epoch, device):
     log_value('Validation Total Loss', loss, epoch)
     log_str = 'Test Epoch: %d | Loss: %.3f '%(epoch, loss)
     print(log_str)
-    rnet_state_dict = rnet.module.state_dict() if args.parallel else rnet.state_dict()
+    rnet_state_dict = triplet_net.module.state_dict() if args.parallel else triplet_net.state_dict()
 
     torch.save(rnet_state_dict, args.cv_dir+'/ckpt_E_%d.pth'%(epoch))
     if loss < best_loss:
         torch.save(rnet_state_dict, args.cv_dir+'/best_loss.pth')
         best_loss = loss
+
+def adjust_learning_rate(optimizer, epoch, args):
+    """Decay the learning rate based on schedule"""
+    for param_group in optimizer.param_groups:
+        # param_group['lr'] = args.lr * (0.1 ** (epoch // 10))
+        if epoch < 5:  # warm-up
+            if epoch == 0:
+                lr = param_group['lr'] * (float(epoch + 1) / 5)
+            else:
+                lr = param_group['lr'] * (float(epoch + 1) / 5) / (float(epoch) / 5)
+        else:
+            if epoch // 30 == 0:
+                lr = param_group['lr'] * 0.1
+            else:
+                lr = param_group['lr']
+        param_group["lr"] = lr
 
 trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames)
 trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
@@ -136,9 +152,9 @@ else:
     device = torch.device("cpu")
 
 # rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3*3)
-rnet = models.resnet101().to(device)
+rnet = models.resnet101(pretrained=True)
 # rnet = nn.Sequential(*list(rnet.children())[:-1]).to(device)
-triplet_net = TripletNet(rnet).to(device)
+triplet_net = TripletNet(rnet)
 
 # losses
 triplet_loss = TripletLoss(margin=1.0).to(device)
@@ -147,18 +163,19 @@ start_epoch = 0
 best_loss = 1000
 if args.ckpt_dir:
     ckpt = torch.load(args.ckpt_dir)
-    rnet.load_state_dict(ckpt['rnet'])
+    triplet_net.load_state_dict(ckpt['triplet_net'])
     start_epoch = int(args.ckpt_dir.split('_')[-1])
 
 
 if c > 1:
-    rnet = nn.DataParallel(rnet, device_ids=[0, 1, 2, 3])
-rnet.to(device)
+    triplet_net = nn.DataParallel(triplet_net, device_ids=[0, 1, 2, 3])
+triplet_net.to(device)
 
 # Save the configuration to the output directory
 configure(args.cv_dir+'/log', flush_secs=5)
-optimizer = optim.Adam(rnet.parameters(), lr=args.lr)
+optimizer = optim.Adam(triplet_net.parameters(), lr=args.lr)
 for epoch in range(start_epoch, start_epoch+args.max_epochs+1):
+    adjust_learning_rate(optimizer, epoch, args)
     train(epoch, device)
     if epoch % 5 == 0:
         test(epoch, device)
