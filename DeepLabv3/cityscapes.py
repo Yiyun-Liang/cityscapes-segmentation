@@ -43,6 +43,8 @@ class Cityscapes(data.Dataset):
     dataset_split = 'train' if self.train else 'val'
     self.images = self._get_files('image', dataset_split)
     self.masks = self._get_files('label', dataset_split)
+    self.images = self.images[:200]
+    self.masks = self.masks[:200]
 
   def __getitem__(self, index):
     _img = Image.open(self.images[index]).convert('RGB')
