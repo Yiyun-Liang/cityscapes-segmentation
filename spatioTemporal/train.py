@@ -135,7 +135,7 @@ def adjust_learning_rate(epoch, args):
         param_group['lr'] = args.lr * (0.1 ** (epoch // 10))
     
 # Main Function Start Here
-writer = SummaryWriter()
+writer = SummaryWriter(comment=f'LR_{args.lr}_BS_{args.batch_size}')
 
 trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames)
 trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
