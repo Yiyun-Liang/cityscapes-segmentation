@@ -30,8 +30,10 @@ from utils import utils
 #from pytorch_msssim import ssim
 
 import torchvision.models as models
-
 import argparse
+
+from torch.utils.tensorboard import SummaryWriter
+
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
 parser.add_argument('--lr', type=float, default=1e-2, help='learning rate')
 parser.add_argument('--data_dir', default='data/', help= 'data directory')
@@ -85,6 +87,8 @@ def train(epoch):
     #log_value('Train L1 Loss', l1_loss, epoch)
     #log_value('Train SSIM Loss', ssim_loss, epoch)
     log_str = 'Train Epoch: %d | Loss: %.3f'%(epoch, loss)
+    writer.add_scalar('Loss/train', loss.item(), epoch)
+    writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], epoch)
     print(log_str)
 
 def test(epoch):
@@ -115,6 +119,8 @@ def test(epoch):
     #log_value('Validation L1 Loss', l1_loss, epoch)
     #log_value('Validation MSSSIM Loss', ssim_loss, epoch)
     log_str = 'Test Epoch: %d | Loss: %.3f'%(epoch, loss)
+    writer.add_scalar('Loss/val', loss.item(), epoch)
+
     print(log_str)
     rnet_state_dict = temporal_net.module.state_dict() if args.parallel else temporal_net.state_dict()
 
@@ -127,6 +133,9 @@ def adjust_learning_rate(epoch, args):
     """Decay the learning rate based on schedule"""
     for param_group in optimizer.param_groups:
         param_group['lr'] = args.lr * (0.1 ** (epoch // 10))
+    
+# Main Function Start Here
+writer = SummaryWriter()
 
 trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames)
 trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
@@ -167,3 +176,4 @@ for epoch in range(start_epoch, start_epoch+args.max_epochs+1):
     train(epoch)
     if epoch % 5 == 0:
         test(epoch)
+writer.close()
