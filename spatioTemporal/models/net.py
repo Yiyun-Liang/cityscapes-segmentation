@@ -31,8 +31,8 @@ class TemporalNet(nn.Module):
         output3 = self.feature_extractor(x3)
 
         output1 = output1.view(output1.shape[0], -1)
-        output2 = output1.view(output2.shape[0], -1)
-        output3 = output1.view(output3.shape[0], -1)
+        output2 = output2.view(output2.shape[0], -1)
+        output3 = output3.view(output3.shape[0], -1)
 
         # dim = 1: see https://github.com/xudejing/video-clip-order-prediction
         pair12 = self.pairwise(torch.cat([output1, output2], dim=1))

@@ -12,7 +12,7 @@ Image.MAX_IMAGE_PIXELS = None
 warnings.simplefilter('ignore', Image.DecompressionBombWarning)
 
 class CityscapesVideos(Dataset):
-    def __init__(self, csv_path, transform, frame_idxs, test=False):
+    def __init__(self, csv_path, transform, frame_idxs, n_rows, test=False):
         """
         Args:
             csv_path (string): path to csv file

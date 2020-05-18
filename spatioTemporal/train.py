@@ -35,7 +35,7 @@ import argparse
 from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
-parser.add_argument('--lr', type=float, default=1e-2, help='learning rate')
+parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
 parser.add_argument('--data_dir', default='data/', help= 'data directory')
 parser.add_argument('--train_dir', default='data/', help='training data directory')
 parser.add_argument('--test_dir', default='data/', help='test data directory')
@@ -148,7 +148,7 @@ if c > 0:
 else:
     device = torch.device("cpu")
 
-rnet = models.resnet101(pretrained=True).to(device)
+rnet = models.resnet101(pretrained=False).to(device)
 # Remove the last layer and extract the maxpooling features
 del rnet.fc
 rnet.fc=lambda x:x
@@ -168,11 +168,11 @@ best_loss = 1000
 
 # Save the configuration to the output directory
 configure(args.cv_dir+'/log', flush_secs=5)
-optimizer = optim.SGD(temporal_net.parameters(), lr=args.lr)
+optimizer = optim.Adam(temporal_net.parameters(), lr=args.lr)
 criterion = nn.CrossEntropyLoss()
 for epoch in range(start_epoch, start_epoch+args.max_epochs+1):
     print('Start training epoch {}'.format(epoch))
-    adjust_learning_rate(epoch, args)
+    #adjust_learning_rate(epoch, args)
     train(epoch)
     if epoch % 5 == 0:
         test(epoch)

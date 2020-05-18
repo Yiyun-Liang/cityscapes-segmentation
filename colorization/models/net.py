@@ -35,3 +35,30 @@ class TemporalNet(nn.Module):
 
     def get_embedding(self, x):
         return self.feature_extractor(x)
+
+
+class ColorNet(nn.Module):
+    def __init__(self, embedding_net, consecutiveFrame):
+        super(ColorNet, self).__init__()
+        self.embedding_net = embedding_net
+        self.consecutiveFrame = consecutiveFrame
+        self.relu = nn.ReLU(inplace=True)
+        self.conv3d_1 = nn.Conv3d(2048, 128, kernel_size=(1, 1, 1), dilation=(1, 1, 1))
+        self.conv3d_2 = nn.Conv3d(128, 128, kernel_size=(1, 1, 1), dilation=(3, 1, 1))
+        self.conv3d_3 = nn.Conv3d(128, 128, kernel_size=(1, 1, 1), dilation=(1, 2, 2))
+        self.conv3d_4 = nn.Conv3d(128, 128, kernel_size=(1, 1, 1), dilation=(1, 2, 2))
+        self.conv3d_5 = nn.Conv3d(128, 256, kernel_size=(1, 1, 1), dilation=(1, 1, 1))
+
+    def forward(self, x):
+        out = self.relu(self.embedding_net(x))
+        out = self.relu(self.conv3d_1(out[:, :, :, :, None]))
+        out = self.relu(self.conv3d_2(out))
+        out = self.relu(self.conv3d_3(out))
+        out = self.relu(self.conv3d_4(out))
+        out = self.relu(self.conv3d_5(out))
+        return out
+
+        
+
+
+
