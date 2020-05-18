@@ -9,7 +9,7 @@ import shutil
 from PIL import Image
 from random import randint, sample
 
-from data.dataloader import TemporalVideoDataset
+from dataset.dataloader import TemporalVideoDataset
 
 def save_args(__file__, args):
     shutil.copy(os.path.basename(__file__), args.cv_dir)

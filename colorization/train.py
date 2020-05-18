@@ -25,7 +25,7 @@ import torch.backends.cudnn as cudnn
 cudnn.benchmark = True
 
 from models import PredictorNet
-from models.net import TemporalNet
+from models.net import ColorNet
 from utils import utils
 #from pytorch_msssim import ssim
 
@@ -52,21 +52,50 @@ if not os.path.exists(args.cv_dir):
 utils.save_args(__file__, args)
 
 def train(epoch):
-    temporal_net.train()
+    colornet.train()
     #l1, ssim_loss = [], []
     matches, losses = [], []
     for batch_idx, (inputs, label) in tqdm.tqdm(enumerate(trainloader), total=len(trainloader)):
 
-        frame1, frame2, frame3 = inputs[0], inputs[1], inputs[2]
+        # frame1, frame2, frame3 = inputs
 
         if not args.parallel:
-            frame1 = frame1.to(device)
-            frame2 = frame2.to(device)
-            frame3 = frame3.to(device)
+            # frame1 = frame1.to(device)
+            # frame2 = frame2.to(device)
+            # frame3 = frame3.to(device)
+
             label = label.to(device)
+        left_term = tf.cast(self._NetworkOutput[:, :-1, ...], tf.float32)
+        right_term = tf.cast(tf.tile(self._NetworkOutput[:, -1:, ...], [1, self._consecutiveFrame - 1, 1, 1, 1]),
+                             tf.float32)
 
         predicted_label = temporal_net(frame1, frame2, frame3)
-        loss = criterion(predicted_label, label)
+        output = colornet(frames)
+        left_term = output[:, :-1, ...]
+        right_term = torch.tile(output[:, -1:, ...], [1, 3, 1, 1])
+        term_shape = left_term.shape().tolist()
+        left_term = torch.reshape(left_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
+        right_term = torch.reshape(right_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
+        feature_prod = torch.matmul(left_term, tf.transpose(right_term, perm=[0, 2, 1]))
+        feature_prod = nn.softmax(feature_prod, 1)
+        ref_colorGT = label[:, :3, ...]
+        tar_colorGT = torch.tile(label[:, -1:, ...], [1, 3, 1, 1, 1])
+
+        ref_colorGT_reshape = torch.reshape(ref_colorGT, [-1] + [ref_colorGT.shape()[-3] * ref_colorGT.shape()[-2]]
+                                         + [ref_colorGT.shape()[-1]])
+        tar_colorGT_reshape = torch.reshape(tar_colorGT, [-1] + [tar_colorGT.shape()[-3] * tar_colorGT.shape()[-2]]
+                                         + [tar_colorGT.shape()[-1]])
+
+        pred_color = torch.matmul(torch.transpose(feature_prod, perm=[0, 2, 1]), ref_colorGT_reshape)
+        pred_color = nn.softmax(pred_color, -1)
+        colorPred = torch.reshape(pred_color, [-1] + [3]
+                                     + label.get_shape().tolist()[2:])
+        # max_cls = torch.argmax(colorPred, -1)
+
+
+
+
+        loss = criterion(colorPred, label)
 
         #l1.append(criterion1.cpu())
         #ssim_loss.append(criterion2.detach().cpu())
@@ -143,7 +172,8 @@ rnet = models.resnet101(pretrained=True).to(device)
 # Remove the last layer and extract the maxpooling features
 del rnet.fc
 rnet.fc=lambda x:x
-temporal_net = TemporalNet(rnet, 2048, 3).to(device)
+# temporal_net = TemporalNet(rnet, 2048, 3).to(device)
+colornet = ColorNet(rnet, 4).to(device)
 
 start_epoch = 0
 best_loss = 1000
