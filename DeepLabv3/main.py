@@ -77,8 +77,10 @@ def main():
     raise ValueError('Unknown backbone: {}'.format(args.backbone))
 
   if args.train:
+    print('training')
     criterion = nn.CrossEntropyLoss(ignore_index=255)
-    model = nn.DataParallel(model).cuda()
+    #model = nn.DataParallel(model).cuda()
+    model = model.cuda()
     model.train()
     if args.freeze_bn:
       for m in model.modules():
@@ -87,13 +89,13 @@ def main():
           m.weight.requires_grad = False
           m.bias.requires_grad = False
     backbone_params = (
-        list(model.module.conv1.parameters()) +
-        list(model.module.bn1.parameters()) +
-        list(model.module.layer1.parameters()) +
-        list(model.module.layer2.parameters()) +
-        list(model.module.layer3.parameters()) +
-        list(model.module.layer4.parameters()))
-    last_params = list(model.module.aspp.parameters())
+        list(model.conv1.parameters()) +
+        list(model.bn1.parameters()) +
+        list(model.layer1.parameters()) +
+        list(model.layer2.parameters()) +
+        list(model.layer3.parameters()) +
+        list(model.layer4.parameters()))
+    last_params = list(model.aspp.parameters())
     optimizer = optim.SGD([
       {'params': filter(lambda p: p.requires_grad, backbone_params)},
       {'params': filter(lambda p: p.requires_grad, last_params)}],
@@ -150,6 +152,7 @@ def main():
           }, model_fname % (epoch + 1))
 
   else:
+    print('testing')
     torch.cuda.set_device(args.gpu)
     model = model.cuda()
     model.eval()

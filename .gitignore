@@ -1,5 +1,7 @@
 # Macbook User
 *.DS_Store
+
+log
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -8,6 +10,7 @@ __pycache__/
 *.pth
 *.DS_Store
 *_log
+DeeplabV3/data/
 # C extensions
 *.so
 runs/

@@ -30,6 +30,7 @@ from utils.losses import TripletLoss
 from models.networks import TripletNet, Classification
 
 import torchvision.models as models
+from torch.utils.tensorboard import SummaryWriter
 
 import argparse
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
@@ -89,6 +90,8 @@ def train(epoch, device):
     # l1_loss = torch.stack(l1).mean()
     # ssim_loss = torch.stack(ssim_loss).mean()
     log_value('Train Total Loss', loss, epoch)
+    writer.add_scalar('Loss/train', loss.item(), epoch)
+    writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], epoch)
     # log_value('Train L1 Loss', l1_loss, epoch)
     # log_value('Train SSIM Loss', ssim_loss, epoch)
     log_str = 'Train Epoch: %d | Loss: %.3f '%(epoch, loss)
@@ -116,6 +119,8 @@ def test(epoch, device):
 
     log_value('Validation Total Loss', loss, epoch)
     log_str = 'Test Epoch: %d | Loss: %.3f '%(epoch, loss)
+    writer.add_scalar('Loss/val', loss.item(), epoch)
+
     print(log_str)
     rnet_state_dict = triplet_net.module.state_dict() if args.parallel else triplet_net.state_dict()
 
@@ -140,6 +145,8 @@ def adjust_learning_rate(optimizer, epoch, args):
                 lr = param_group['lr']
         param_group["lr"] = lr
 
+writer = SummaryWriter(comment=f'LR_{args.lr}_BS_{args.batch_size}')
+
 trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames)
 trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 testloader = torchdata.DataLoader(testset, batch_size=int(args.batch_size/2), shuffle=False, num_workers=args.num_workers)
@@ -152,8 +159,8 @@ else:
     device = torch.device("cpu")
 
 # rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3*3)
-rnet = models.resnet101(pretrained=True)
-# rnet = nn.Sequential(*list(rnet.children())[:-1]).to(device)
+rnet = models.resnet101()
+rnet = nn.Sequential(*list(rnet.children())[:-1]).to(device)
 triplet_net = TripletNet(rnet)
 
 # losses
@@ -175,7 +182,9 @@ triplet_net.to(device)
 configure(args.cv_dir+'/log', flush_secs=5)
 optimizer = optim.Adam(triplet_net.parameters(), lr=args.lr)
 for epoch in range(start_epoch, start_epoch+args.max_epochs+1):
-    adjust_learning_rate(optimizer, epoch, args)
+    #adjust_learning_rate(optimizer, epoch, args)
     train(epoch, device)
     if epoch % 5 == 0:
         test(epoch, device)
+
+writer.close()

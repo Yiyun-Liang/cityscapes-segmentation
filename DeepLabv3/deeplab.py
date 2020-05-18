@@ -10,7 +10,7 @@ __all__ = ['ResNet', 'resnet50', 'resnet101', 'resnet152']
 
 model_urls = {
     'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
-    #'resnet101': '../triplet/cv/tmp/ckpt_E_100.pth', #
+    'resnet101_custom': '../triplet/cv/tmp/ckpt_E_45.pth', #
     'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
     'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
 }
@@ -228,6 +228,7 @@ def resnet101(pretrained=False, num_groups=None, weight_std=False, **kwargs):
             overlap_dict = {k[7:]: v for k, v in pretrained_dict.items() if k[7:] in model_dict}
             assert len(overlap_dict) == 312
         elif not num_groups and not weight_std:
+            print('loading')
             #pretrained_dict = torch.load(model_urls['resnet101'])
             pretrained_dict = model_zoo.load_url(model_urls['resnet101'])
             overlap_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}

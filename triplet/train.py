@@ -159,7 +159,7 @@ else:
     device = torch.device("cpu")
 
 # rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3*3)
-rnet = models.resnet101(pretrained=True)
+rnet = models.resnet101()
 rnet = nn.Sequential(*list(rnet.children())[:-1]).to(device)
 triplet_net = TripletNet(rnet)
 
@@ -182,7 +182,7 @@ triplet_net.to(device)
 configure(args.cv_dir+'/log', flush_secs=5)
 optimizer = optim.Adam(triplet_net.parameters(), lr=args.lr)
 for epoch in range(start_epoch, start_epoch+args.max_epochs+1):
-    adjust_learning_rate(optimizer, epoch, args)
+    #adjust_learning_rate(optimizer, epoch, args)
     train(epoch, device)
     if epoch % 5 == 0:
         test(epoch, device)
