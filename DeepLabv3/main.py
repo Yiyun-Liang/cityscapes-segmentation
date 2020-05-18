@@ -79,7 +79,7 @@ def main():
   if args.train:
     print('training')
     criterion = nn.CrossEntropyLoss(ignore_index=255)
-    #model = nn.DataParallel(model).cuda()
+    model = nn.DataParallel(model).cuda()
     model = model.cuda()
     model.train()
     if args.freeze_bn:
