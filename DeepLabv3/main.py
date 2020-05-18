@@ -50,6 +50,8 @@ parser.add_argument('--resume', type=str, default=None,
                     help='path to checkpoint to resume from')
 parser.add_argument('--workers', type=int, default=4,
                     help='number of data loading workers')
+parser.add_argument('--custom', type=str, default=None,
+                    help='path to custom ckpt')
 args = parser.parse_args()
 
 
@@ -69,6 +71,7 @@ def main():
   if args.backbone == 'resnet101':
     model = getattr(deeplab, 'resnet101')(
         pretrained=(not args.scratch),
+        custom=args.custom,
         num_classes=len(dataset.CLASSES),
         num_groups=args.groups,
         weight_std=args.weight_std,
