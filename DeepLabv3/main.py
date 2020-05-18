@@ -55,6 +55,29 @@ parser.add_argument('--custom', type=str, default=None,
                     help='path to custom ckpt')
 args = parser.parse_args()
 
+def get_miou(model, dataset, writer, global_step):
+  torch.cuda.set_device(args.gpu)
+  model = model.cuda()
+  model.eval()
+
+  inter_meter = AverageMeter()
+  union_meter = AverageMeter()
+  with torch.no_grad():
+    for i in range(len(dataset)):
+      inputs, target = dataset[i]
+      inputs = Variable(inputs.cuda())
+      outputs = model(inputs.unsqueeze(0))
+      _, pred = torch.max(outputs, 1)
+      pred = pred.data.cpu().numpy().squeeze().astype(np.uint8)
+      mask = target.numpy().astype(np.uint8)
+
+      inter, union = inter_and_union(pred, mask, len(dataset.CLASSES))
+      inter_meter.update(inter)
+      union_meter.update(union)
+
+    iou = inter_meter.sum / (union_meter.sum + 1e-10)
+    print('Mean IoU: {0:.2f}'.format(iou.mean() * 100))
+    writer.add_scalar('miou', iou.mean(), global_step)
 
 def main():
   assert torch.cuda.is_available()
@@ -67,6 +90,9 @@ def main():
   elif args.dataset == 'cityscapes':
     dataset = Cityscapes('/ssd',
         train=args.train, crop_size=args.crop_size)
+
+    test_dataset = Cityscapes('/ssd',
+        train=False, crop_size=args.crop_size)
   else:
     raise ValueError('Unknown dataset: {}'.format(args.dataset))
   if args.backbone == 'resnet101':
@@ -156,6 +182,7 @@ def main():
 
       writer.add_scalar('learning_rate0', optimizer.param_groups[0]['lr'], epoch)
       writer.add_scalar('learning_rate1', optimizer.param_groups[1]['lr'], epoch)
+      get_miou(model, test_dataset, writer, global_step)
 
       if (epoch+1) % 5 == 0:
         torch.save({
