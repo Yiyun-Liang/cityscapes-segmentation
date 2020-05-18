@@ -14,6 +14,7 @@ import deeplab
 from pascal import VOCSegmentation
 from cityscapes import Cityscapes
 from utils import AverageMeter, inter_and_union
+from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train', action='store_true', default=False,
@@ -79,6 +80,8 @@ def main():
   else:
     raise ValueError('Unknown backbone: {}'.format(args.backbone))
 
+  writer = SummaryWriter(comment=f'LR_{args.lr}_BS_{args.batch_size}')
+  global_step = 0
   if args.train:
     print('training')
     criterion = nn.CrossEntropyLoss(ignore_index=255)
@@ -123,6 +126,7 @@ def main():
         print('=> no checkpoint found at {0}'.format(args.resume))
 
     for epoch in range(start_epoch, args.epochs):
+      epoch_loss = []
       for i, (inputs, target) in enumerate(dataset_loader):
         cur_iter = epoch * len(dataset_loader) + i
         lr = args.base_lr * (1 - float(cur_iter) / max_iter) ** 0.9
@@ -137,6 +141,9 @@ def main():
           pdb.set_trace()
         losses.update(loss.item(), args.batch_size)
 
+        writer.add_scalar('Loss/train', loss.item(), global_step)
+        global_step += 1
+
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
@@ -146,6 +153,9 @@ def main():
               'lr: {3:.6f}\t'
               'loss: {loss.val:.4f} ({loss.ema:.4f})'.format(
               epoch + 1, i + 1, len(dataset_loader), lr, loss=losses))
+
+      writer.add_scalar('learning_rate0', optimizer.param_groups[0]['lr'], epoch)
+      writer.add_scalar('learning_rate1', optimizer.param_groups[1]['lr'], epoch)
 
       if (epoch+1) % 5 == 0:
         torch.save({
@@ -190,6 +200,7 @@ def main():
         print('IoU {0}: {1:.2f}'.format(dataset.CLASSES[i], val * 100))
       print('Mean IoU: {0:.2f}'.format(iou.mean() * 100))
 
+  writer.close()
 
 if __name__ == "__main__":
   main()
