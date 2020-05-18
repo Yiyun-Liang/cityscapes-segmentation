@@ -89,13 +89,13 @@ def main():
           m.weight.requires_grad = False
           m.bias.requires_grad = False
     backbone_params = (
-        list(model.conv1.parameters()) +
-        list(model.bn1.parameters()) +
-        list(model.layer1.parameters()) +
-        list(model.layer2.parameters()) +
-        list(model.layer3.parameters()) +
-        list(model.layer4.parameters()))
-    last_params = list(model.aspp.parameters())
+        list(model.module.conv1.parameters()) +
+        list(model.module.bn1.parameters()) +
+        list(model.module.layer1.parameters()) +
+        list(model.module.layer2.parameters()) +
+        list(model.module.layer3.parameters()) +
+        list(model.module.layer4.parameters()))
+    last_params = list(model.module.aspp.parameters())
     optimizer = optim.SGD([
       {'params': filter(lambda p: p.requires_grad, backbone_params)},
       {'params': filter(lambda p: p.requires_grad, last_params)}],
