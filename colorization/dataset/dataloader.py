@@ -26,7 +26,8 @@ class TemporalVideoDataset(Dataset):
         # Transforms
         self.transforms = transform
         # Read the csv file
-        self.data_info = pd.read_csv(csv_path, header=0, nrows=n_rows)
+        # self.data_info = pd.read_csv(csv_path, header=0, nrows=n_rows)
+        self.data_info = pd.read_csv(csv_path, header=0)
         # First column contains the image paths
         self.image_arr = np.asarray(self.data_info['path'])
         self.seq_arr = np.asarray(self.data_info['sequence'])
@@ -68,6 +69,19 @@ class TemporalVideoDataset(Dataset):
         last_img = Image.open(last_image_name)
 
         # Transform the images
+        first_grey = np.asarray(first_img.convert("L"))
+        second_grey = np.asarray(second_img.convert("L"))
+        third_grey = np.asarray(third_img.convert("L"))
+        last_grey = np.asarray(last_img.convert("L"))
+        first_grey = np.concatenate((first_grey[:, :, None], first_grey[:, :, None], first_grey[:, :, None]), axis=2)
+        second_grey = np.concatenate((second_grey[:, :, None], second_grey[:, :, None], second_grey[:, :, None]), axis=2)
+        third_grey = np.concatenate((third_grey[:, :, None], third_grey[:, :, None], third_grey[:, :, None]), axis=2)
+        last_grey = np.concatenate((last_grey[:, :, None], last_grey[:, :, None], last_grey[:, :, None]), axis=2)
+        first_grey = self.transforms(Image.fromarray(first_grey))
+
+        second_grey = self.transforms(Image.fromarray(second_grey))
+        third_grey = self.transforms(Image.fromarray(third_grey))
+        last_grey = self.transforms(Image.fromarray(last_grey))
         first_img = self.transforms(first_img)
         second_img = self.transforms(second_img)
         third_img = self.transforms(third_img)
@@ -79,7 +93,7 @@ class TemporalVideoDataset(Dataset):
         pair[second_img] = 1
         pair[third_img] = 2
         pair[last_img] = 3
-        img_list = [first_img.convert('LA'), second_img.convert('LA'), third_img.convert('LA'), last_img.convert('LA')]
+        img_list = [first_grey, second_grey, third_grey, last_grey]
         label_dict = {'012':0, '021':1, '102':2, '120':3, '201':4, '210':5}
         # random.shuffle(img_list)
         # label = str(pair[img_list[0]]) + str(pair[img_list[1]]) + str(pair[img_list[2]], str(pair[img_list[3]]))
@@ -87,7 +101,7 @@ class TemporalVideoDataset(Dataset):
         label = [first_img, second_img, third_img, last_img]
         #img_list_label = pair[img_list[1]]
 
-        return (img_list, img_list_label)
+        return (img_list, label)
 
     def __len__(self):
         return self.data_len

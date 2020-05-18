@@ -12,7 +12,7 @@ Image.MAX_IMAGE_PIXELS = None
 warnings.simplefilter('ignore', Image.DecompressionBombWarning)
 
 class CityscapesVideos(Dataset):
-    def __init__(self, csv_path, transform, frame_idxs, test=False):
+    def __init__(self, csv_path, transform, frame_idxs, n_rows, test=False):
         """
         Args:
             csv_path (string): path to csv file
@@ -60,7 +60,7 @@ class CityscapesVideos(Dataset):
 
 
 class TripletCityscapesVideos(Dataset):
-    def __init__(self, csv_path, transform, frame_idxs, test=False):
+    def __init__(self, csv_path, transform, frame_idxs, n_rows, test=False):
         """
         Args:
             csv_path (string): path to csv file
@@ -73,7 +73,7 @@ class TripletCityscapesVideos(Dataset):
         # Transforms
         self.transforms = transform
         # Read the csv file
-        self.data_info = pd.read_csv(csv_path, header=0)
+        self.data_info = pd.read_csv(csv_path, header=0, nrows=n_rows)
         # First column contains the image paths
         self.image_arr = np.asarray(self.data_info['path'])
         self.seq_arr = np.asarray(self.data_info['sequence'])

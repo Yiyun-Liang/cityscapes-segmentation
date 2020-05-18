@@ -33,73 +33,98 @@ import torchvision.models as models
 
 import argparse
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
-parser.add_argument('--lr', type=float, default=1e-2, help='learning rate')
+parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
 parser.add_argument('--data_dir', default='data/', help= 'data directory')
 parser.add_argument('--train_dir', default='data/', help='training data directory')
 parser.add_argument('--test_dir', default='data/', help='test data directory')
 parser.add_argument('--frames', nargs='+', help='Frames to use as input and output', required=False)
 parser.add_argument('--cv_dir', default='cv/tmp/', help='checkpoint directory (models and logs are saved here)')
 parser.add_argument('--ckpt_dir', help='checkpoint directory (models and logs are saved here)')
-parser.add_argument('--batch_size', type=int, default=8, help='batch size')
+parser.add_argument('--batch_size', type=int, default=4, help='batch size')
 parser.add_argument('--epoch_step', type=int, default=10000, help='epochs after which lr is decayed')
 parser.add_argument('--max_epochs', type=int, default=10000, help='total epochs to run')
-parser.add_argument('--num_workers', type=int, default=8, help='number of workers in training and testing')
+parser.add_argument('--num_workers', type=int, default=4, help='number of workers in training and testing')
 parser.add_argument('--parallel', action ='store_true', default=False, help='use multiple GPUs for training')
 args = parser.parse_args()
+
 
 if not os.path.exists(args.cv_dir):
     os.system('mkdir ' + args.cv_dir)
 utils.save_args(__file__, args)
 
 def train(epoch):
+
     colornet.train()
     #l1, ssim_loss = [], []
     matches, losses = [], []
     for batch_idx, (inputs, label) in tqdm.tqdm(enumerate(trainloader), total=len(trainloader)):
+        frame1, frame2, frame3, frame4 = inputs
 
-        # frame1, frame2, frame3 = inputs
+
+        label = torch.cat((label[0][:, None, :, :, :], label[1][:, None, :, :, :], label[2][:, None, :, :, :], label[3][:, None, :, :, :]), axis=1)
+
+        #frame1 = torch.cat((frame1, frame1, frame1), dim=1)
+        #frame2 = torch.cat((frame2, frame2, frame2), dim=1)
+        #frame3 = torch.cat((frame3, frame3, frame3), dim=1)
+        #frame4 = torch.cat((frame4, frame4, frame4), dim=1)
 
         if not args.parallel:
-            # frame1 = frame1.to(device)
-            # frame2 = frame2.to(device)
-            # frame3 = frame3.to(device)
+            frame1 = frame1.to(device)
+            frame2 = frame2.to(device)
+            frame3 = frame3.to(device)
+            frame4 = frame4.to(device)
 
             label = label.to(device)
-        left_term = tf.cast(self._NetworkOutput[:, :-1, ...], tf.float32)
-        right_term = tf.cast(tf.tile(self._NetworkOutput[:, -1:, ...], [1, self._consecutiveFrame - 1, 1, 1, 1]),
-                             tf.float32)
 
-        predicted_label = temporal_net(frame1, frame2, frame3)
-        output = colornet(frames)
+
+
+        output_1 = colornet(frame1)
+        output_2 = colornet(frame2)
+        output_3 = colornet(frame3)
+        output_4 = colornet(frame4)
+        output = torch.cat((output_1[:, None, ...], output_2[:, None, ...], output_3[:, None, ...], output_4[:, None, ...]), axis=1)
+
+
         left_term = output[:, :-1, ...]
-        right_term = torch.tile(output[:, -1:, ...], [1, 3, 1, 1])
-        term_shape = left_term.shape().tolist()
+        right_term = torch.cat((output[:, -1:, ...], output[:, -1:, ...], output[:, -1:, ...]), axis=1)
+        term_shape = left_term.shape
         left_term = torch.reshape(left_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
         right_term = torch.reshape(right_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
-        feature_prod = torch.matmul(left_term, tf.transpose(right_term, perm=[0, 2, 1]))
-        feature_prod = nn.softmax(feature_prod, 1)
+
+        feature_prod = torch.matmul(left_term, right_term.transpose(2, 1))
+        feature_prod = nn.Softmax(1)(feature_prod)
         ref_colorGT = label[:, :3, ...]
-        tar_colorGT = torch.tile(label[:, -1:, ...], [1, 3, 1, 1, 1])
+        tar_colorGT = torch.cat((label[:, -1:, ...], label[:, -1:, ...], label[:, -1:, ...]), axis=1)
 
-        ref_colorGT_reshape = torch.reshape(ref_colorGT, [-1] + [ref_colorGT.shape()[-3] * ref_colorGT.shape()[-2]]
-                                         + [ref_colorGT.shape()[-1]])
-        tar_colorGT_reshape = torch.reshape(tar_colorGT, [-1] + [tar_colorGT.shape()[-3] * tar_colorGT.shape()[-2]]
-                                         + [tar_colorGT.shape()[-1]])
+        ref_colorGT_reshape = torch.reshape(ref_colorGT, [-1] + [ref_colorGT.shape[-3] * ref_colorGT.shape[-2]]
+                                         + [ref_colorGT.shape[-1]])
+        tar_colorGT_reshape = torch.reshape(tar_colorGT, [-1] + [tar_colorGT.shape[-3] * tar_colorGT.shape[-2]]
+                                         + [tar_colorGT.shape[-1]])
 
-        pred_color = torch.matmul(torch.transpose(feature_prod, perm=[0, 2, 1]), ref_colorGT_reshape)
-        pred_color = nn.softmax(pred_color, -1)
+        pred_color = torch.matmul(ref_colorGT_reshape, feature_prod.transpose(2, 1))
+        pred_color = nn.Softmax(-1)(pred_color)
+
         colorPred = torch.reshape(pred_color, [-1] + [3]
-                                     + label.get_shape().tolist()[2:])
+                                     + list(label.shape)[2:])
+        
+        
         # max_cls = torch.argmax(colorPred, -1)
 
 
 
 
-        loss = criterion(colorPred, label)
+        loss = criterion(colorPred, label[:, 3, ...].long())
+        
 
         #l1.append(criterion1.cpu())
         #ssim_loss.append(criterion2.detach().cpu())
-        losses.append(loss.cpu())
+        #losses.append(loss.cpu())
+        # print(loss.cpu())
+        if loss.cpu() is None or loss.detach().cpu().numpy() == np.nan or np.isnan(loss.detach().cpu().numpy()):
+            print("nan here")
+        else:
+            losses.append(loss.cpu())
+                
 
         optimizer.zero_grad()
         loss.backward()
@@ -118,23 +143,70 @@ def train(epoch):
 
 def test(epoch):
     global best_loss
-    temporal_net.eval()
+    colornet.eval()
     #l1, ssim_loss = [], []
     matches, losses = [], []
     with torch.no_grad():
         for batch_idx, (inputs, label) in tqdm.tqdm(enumerate(testloader), total=len(testloader)):
-            frame1, frame2, frame3 = inputs[0], inputs[1], inputs[2]
+            frame1, frame2, frame3, frame4 = inputs
+
+            label = torch.cat((label[0][:, None, :, :, :], label[1][:, None, :, :, :], label[2][:, None, :, :, :], label[3][:, None, :, :, :]), axis=1)
+
+            #frame1 = torch.cat((frame1, frame1, frame1), dim=1)
+            #frame2 = torch.cat((frame2, frame2, frame2), dim=1)
+            #frame3 = torch.cat((frame3, frame3, frame3), dim=1)
+            #frame4 = torch.cat((frame4, frame4, frame4), dim=1)
 
             if not args.parallel:
                 frame1 = frame1.to(device)
                 frame2 = frame2.to(device)
                 frame3 = frame3.to(device)
+                frame4 = frame4.to(device)
+
                 label = label.to(device)
 
-            predicted_label = temporal_net(frame1, frame2, frame3)
-            loss = criterion(predicted_label, label)
 
-            losses.append(loss.detach().cpu())
+
+            output_1 = colornet(frame1)
+            output_2 = colornet(frame2)
+            output_3 = colornet(frame3)
+            output_4 = colornet(frame4)
+            output = torch.cat((output_1[:, None, ...], output_2[:, None, ...], output_3[:, None, ...], output_4[:, None, ...]), axis=1)
+
+
+            left_term = output[:, :-1, ...]
+            right_term = torch.cat((output[:, -1:, ...], output[:, -1:, ...], output[:, -1:, ...]), axis=1)
+            term_shape = left_term.shape
+            left_term = torch.reshape(left_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
+            right_term = torch.reshape(right_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
+
+            feature_prod = torch.matmul(left_term, right_term.transpose(2, 1))
+            feature_prod = nn.Softmax(1)(feature_prod)
+            ref_colorGT = label[:, :3, ...]
+            tar_colorGT = torch.cat((label[:, -1:, ...], label[:, -1:, ...], label[:, -1:, ...]), axis=1)
+
+            ref_colorGT_reshape = torch.reshape(ref_colorGT, [-1] + [ref_colorGT.shape[-3] * ref_colorGT.shape[-2]]
+                                         + [ref_colorGT.shape[-1]])
+            tar_colorGT_reshape = torch.reshape(tar_colorGT, [-1] + [tar_colorGT.shape[-3] * tar_colorGT.shape[-2]]
+                                         + [tar_colorGT.shape[-1]])
+
+            pred_color = torch.matmul(ref_colorGT_reshape, feature_prod.transpose(2, 1))
+            pred_color = nn.Softmax(-1)(pred_color)
+
+            colorPred = torch.reshape(pred_color, [-1] + [3]
+                                     + list(label.shape)[2:])
+        
+        
+            # max_cls = torch.argmax(colorPred, -1)
+
+
+
+
+            loss = criterion(colorPred, label[:, 3, ...].long())
+
+            #l1.append(criterion1.cpu())
+            #ssim_loss.append(criterion2.detach().cpu())
+            losses.append(loss.cpu())
 
     loss = torch.stack(losses).mean()
     #l1_loss = torch.stack(l1).mean()
@@ -145,7 +217,7 @@ def test(epoch):
     #log_value('Validation MSSSIM Loss', ssim_loss, epoch)
     log_str = 'Test Epoch: %d | Loss: %.3f'%(epoch, loss)
     print(log_str)
-    rnet_state_dict = temporal_net.module.state_dict() if args.parallel else temporal_net.state_dict()
+    rnet_state_dict = colornet.module.state_dict() if args.parallel else colornet.state_dict()
 
     torch.save(rnet_state_dict, args.cv_dir+'/ckpt_E_%d.pth'%(epoch))
     if loss < best_loss:
@@ -168,10 +240,10 @@ if c > 0:
 else:
     device = torch.device("cpu")
 
-rnet = models.resnet101(pretrained=True).to(device)
+
+rnet = models.resnet101(pretrained=True)
+rnet = nn.Sequential(*list(rnet.children())[:-1]).to(device)
 # Remove the last layer and extract the maxpooling features
-del rnet.fc
-rnet.fc=lambda x:x
 # temporal_net = TemporalNet(rnet, 2048, 3).to(device)
 colornet = ColorNet(rnet, 4).to(device)
 
@@ -189,8 +261,9 @@ best_loss = 1000
 
 # Save the configuration to the output directory
 configure(args.cv_dir+'/log', flush_secs=5)
-optimizer = optim.SGD(temporal_net.parameters(), lr=args.lr)
+optimizer = optim.SGD(colornet.parameters(), lr=args.lr)
 criterion = nn.CrossEntropyLoss()
+
 for epoch in range(start_epoch, start_epoch+args.max_epochs+1):
     print('Start training epoch {}'.format(epoch))
     adjust_learning_rate(epoch, args)
