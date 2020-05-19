@@ -242,7 +242,7 @@ else:
 
 
 rnet = models.resnet101(pretrained=True)
-rnet = nn.Sequential(*list(rnet.children())[:-1]).to(device)
+rnet = nn.Sequential(*list(rnet.children())[:-2]).to(device)
 # Remove the last layer and extract the maxpooling features
 # temporal_net = TemporalNet(rnet, 2048, 3).to(device)
 colornet = ColorNet(rnet, 4).to(device)

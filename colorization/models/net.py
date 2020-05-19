@@ -51,6 +51,7 @@ class ColorNet(nn.Module):
 
     def forward(self, x):
         out = self.relu(self.embedding_net(x))
+        print(out.shape)
         out = self.relu(self.conv3d_1(out[:, :, :, :, None]))
         out = self.relu(self.conv3d_2(out))
         out = self.relu(self.conv3d_3(out))
