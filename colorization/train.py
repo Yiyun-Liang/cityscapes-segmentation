@@ -145,8 +145,8 @@ def train(epoch):
     log_str = 'Train Epoch: %d | Loss: %.3f'%(epoch, loss)
     writer.add_scalar('Loss/train', loss.item(), epoch)
     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], epoch)
-    writer.add_embedding('input_label', label[:, 3, ...].reshape(args.batch_size, -1), epoch)
-    writer.add_embedding('input_predict', colorPred.reshape(args.batch_size, -1), epoch)
+    writer.add_embedding(label[:, 3, ...].reshape(args.batch_size, -1), global_step=epoch, tag='input_label')
+    writer.add_embedding(colorPred.reshape(args.batch_size, -1), global_step=epoch, tag='input_predict')
     print(log_str)
 
 def test(epoch):
