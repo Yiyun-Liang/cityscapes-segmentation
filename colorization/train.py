@@ -112,8 +112,7 @@ def train(epoch):
                                      + list(label.shape)[2:])
         
         
-        # max_cls = torch.argmax(colorPred, -1)
-        print(colorPred.shape)
+        max_cls = torch.argmax(colorPred, 1)
 
 
 
@@ -245,7 +244,7 @@ else:
     device = torch.device("cpu")
 
 
-rnet = models.resnet101(pretrained=False)
+rnet = models.resnet50(pretrained=False)
 rnet = nn.Sequential(*list(rnet.children())[:-2]).to(device)
 # Remove the last layer and extract the maxpooling features
 # temporal_net = TemporalNet(rnet, 2048, 3).to(device)
