@@ -87,7 +87,8 @@ def train(epoch):
         # output_4 = colornet(frame4)
         # output = torch.cat((output_1[:, None, ...], output_2[:, None, ...], output_3[:, None, ...], output_4[:, None, ...]), axis=1)
         output = colornet(frame1, frame2, frame3, frame4)
-
+        print(output.shape)
+        # raise
         left_term = output[:, :-1, ...]
         right_term = torch.cat((output[:, -1:, ...], output[:, -1:, ...], output[:, -1:, ...]), axis=1)
         term_shape = left_term.shape
@@ -244,7 +245,7 @@ else:
     device = torch.device("cpu")
 
 
-rnet = models.resnet101(pretrained=True)
+rnet = models.resnet101(pretrained=False)
 rnet = nn.Sequential(*list(rnet.children())[:-2]).to(device)
 # Remove the last layer and extract the maxpooling features
 # temporal_net = TemporalNet(rnet, 2048, 3).to(device)
