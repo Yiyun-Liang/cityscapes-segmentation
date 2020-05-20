@@ -26,7 +26,7 @@ class TemporalVideoDataset(Dataset):
         # Transforms
         self.transforms = transform
         # Read the csv file
-        self.data_info = pd.read_csv(csv_path, header=0)#,nrows=n_rows)
+        self.data_info = pd.read_csv(csv_path, header=0, nrows=n_rows)
         # First column contains the image paths
         self.image_arr = np.asarray(self.data_info['path'])
         self.seq_arr = np.asarray(self.data_info['sequence'])
@@ -51,17 +51,18 @@ class TemporalVideoDataset(Dataset):
         annotated_frame = self.annotated_frames[index]
 
         # Randomly pick the triplet with sequence
-        #prev_id = np.random.randint(low=start_frame, high=current_id+1)
-        #last_id = np.random.randint(low=current_id, high=end_frame+1)
+        first_id = np.random.randint(low=start_frame, high=start_frame+8)
+        second_id = np.random.randint(low=start_frame+10, high=start_frame+18)
+        third_id = np.random.randint(low=start_frame+20, high=start_frame+28)
 
         # Open the images
-        first_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(start_frame).zfill(6))
+        first_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(first_id).zfill(6))
         first_img = Image.open(first_image_name)
 
-        second_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(start_frame+8).zfill(6))
+        second_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(second_id).zfill(6))
         second_img = Image.open(second_image_name)
 
-        last_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(start_frame+16).zfill(6))
+        last_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(third_id).zfill(6))
         last_img = Image.open(last_image_name)
 
         # Transform the images
