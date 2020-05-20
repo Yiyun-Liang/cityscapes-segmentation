@@ -30,6 +30,7 @@ from utils import utils
 #from pytorch_msssim import ssim
 
 import torchvision.models as models
+from torch.utils.tensorboard import SummaryWriter
 
 import argparse
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
@@ -142,6 +143,10 @@ def train(epoch):
     #log_value('Train L1 Loss', l1_loss, epoch)
     #log_value('Train SSIM Loss', ssim_loss, epoch)
     log_str = 'Train Epoch: %d | Loss: %.3f'%(epoch, loss)
+    writer.add_scalar('Loss/train', loss.item(), epoch)
+    writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], epoch)
+    writer.add_scalar('input_label', label[3].reshape(args.batch_size, -1), epoch)
+    writer.add_scalar('input_predict', colorPred.reshape(args.batch_size, -1), epoch)
     print(log_str)
 
 def test(epoch):
@@ -153,7 +158,10 @@ def test(epoch):
         for batch_idx, (inputs, label) in tqdm.tqdm(enumerate(testloader), total=len(testloader)):
             frame1, frame2, frame3, frame4 = inputs
 
+
             label = torch.cat((label[0][:, None, :, :, :], label[1][:, None, :, :, :], label[2][:, None, :, :, :], label[3][:, None, :, :, :]), axis=1)
+
+            frames = torch.cat((frame1, frame2, frame3, frame4), axis=0)
 
             #frame1 = torch.cat((frame1, frame1, frame1), dim=1)
             #frame2 = torch.cat((frame2, frame2, frame2), dim=1)
@@ -165,18 +173,20 @@ def test(epoch):
                 frame2 = frame2.to(device)
                 frame3 = frame3.to(device)
                 frame4 = frame4.to(device)
+                # frames = frames.to(device)
 
                 label = label.to(device)
 
 
 
-            output_1 = colornet(frame1)
-            output_2 = colornet(frame2)
-            output_3 = colornet(frame3)
-            output_4 = colornet(frame4)
-            output = torch.cat((output_1[:, None, ...], output_2[:, None, ...], output_3[:, None, ...], output_4[:, None, ...]), axis=1)
-
-
+            # output_1 = colornet(frame1)
+            # output_2 = colornet(frame2)
+            # output_3 = colornet(frame3)
+            # output_4 = colornet(frame4)
+            # output = torch.cat((output_1[:, None, ...], output_2[:, None, ...], output_3[:, None, ...], output_4[:, None, ...]), axis=1)
+            output = colornet(frame1, frame2, frame3, frame4)
+            # print(output.shape)
+            # raise
             left_term = output[:, :-1, ...]
             right_term = torch.cat((output[:, -1:, ...], output[:, -1:, ...], output[:, -1:, ...]), axis=1)
             term_shape = left_term.shape
@@ -189,19 +199,18 @@ def test(epoch):
             tar_colorGT = torch.cat((label[:, -1:, ...], label[:, -1:, ...], label[:, -1:, ...]), axis=1)
 
             ref_colorGT_reshape = torch.reshape(ref_colorGT, [-1] + [ref_colorGT.shape[-3] * ref_colorGT.shape[-2]]
-                                         + [ref_colorGT.shape[-1]])
+                                             + [ref_colorGT.shape[-1]])
             tar_colorGT_reshape = torch.reshape(tar_colorGT, [-1] + [tar_colorGT.shape[-3] * tar_colorGT.shape[-2]]
-                                         + [tar_colorGT.shape[-1]])
+                                             + [tar_colorGT.shape[-1]])
 
             pred_color = torch.matmul(ref_colorGT_reshape, feature_prod.transpose(2, 1))
             pred_color = nn.Softmax(-1)(pred_color)
 
             colorPred = torch.reshape(pred_color, [-1] + [3]
-                                     + list(label.shape)[2:])
-        
-        
-            # max_cls = torch.argmax(colorPred, -1)
-
+                                         + list(label.shape)[2:])
+            
+            
+            max_cls = torch.argmax(colorPred, 1)
 
 
 
@@ -219,6 +228,7 @@ def test(epoch):
     #log_value('Validation L1 Loss', l1_loss, epoch)
     #log_value('Validation MSSSIM Loss', ssim_loss, epoch)
     log_str = 'Test Epoch: %d | Loss: %.3f'%(epoch, loss)
+    writer.add_scalar('Loss/val', loss.item(), epoch)
     print(log_str)
     rnet_state_dict = colornet.module.state_dict() if args.parallel else colornet.state_dict()
 
@@ -231,6 +241,10 @@ def adjust_learning_rate(epoch, args):
     """Decay the learning rate based on schedule"""
     for param_group in optimizer.param_groups:
         param_group['lr'] = args.lr * (0.1 ** (epoch // 10))
+
+
+
+writer = SummaryWriter(comment=f'LR_{args.lr}_BS_{args.batch_size}')
 
 trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames)
 trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
@@ -273,3 +287,4 @@ for epoch in range(start_epoch, start_epoch+args.max_epochs+1):
     train(epoch)
     if epoch % 5 == 0:
         test(epoch)
+writer.close()

@@ -88,7 +88,7 @@ def train(epoch):
     #log_value('Train SSIM Loss', ssim_loss, epoch)
     log_str = 'Train Epoch: %d | Loss: %.3f'%(epoch, loss)
     writer.add_scalar('Loss/train', loss.item(), epoch)
-    writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], epoch)
+    writer.add_scalar('label_frame', optimizer.param_groups[0]['lr'], epoch)
     print(log_str)
 
 def test(epoch):
