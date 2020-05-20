@@ -63,6 +63,8 @@ def train(epoch):
 
         label = torch.cat((label[0][:, None, :, :, :], label[1][:, None, :, :, :], label[2][:, None, :, :, :], label[3][:, None, :, :, :]), axis=1)
 
+        frames = torch.cat((frame1, frame2, frame3, frame4), axis=0)
+
         #frame1 = torch.cat((frame1, frame1, frame1), dim=1)
         #frame2 = torch.cat((frame2, frame2, frame2), dim=1)
         #frame3 = torch.cat((frame3, frame3, frame3), dim=1)
@@ -73,17 +75,18 @@ def train(epoch):
             frame2 = frame2.to(device)
             frame3 = frame3.to(device)
             frame4 = frame4.to(device)
+            # frames = frames.to(device)
 
             label = label.to(device)
 
 
 
-        output_1 = colornet(frame1)
-        output_2 = colornet(frame2)
-        output_3 = colornet(frame3)
-        output_4 = colornet(frame4)
-        output = torch.cat((output_1[:, None, ...], output_2[:, None, ...], output_3[:, None, ...], output_4[:, None, ...]), axis=1)
-
+        # output_1 = colornet(frame1)
+        # output_2 = colornet(frame2)
+        # output_3 = colornet(frame3)
+        # output_4 = colornet(frame4)
+        # output = torch.cat((output_1[:, None, ...], output_2[:, None, ...], output_3[:, None, ...], output_4[:, None, ...]), axis=1)
+        output = colornet(frame1, frame2, frame3, frame4)
 
         left_term = output[:, :-1, ...]
         right_term = torch.cat((output[:, -1:, ...], output[:, -1:, ...], output[:, -1:, ...]), axis=1)

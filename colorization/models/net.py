@@ -49,10 +49,15 @@ class ColorNet(nn.Module):
         self.conv3d_4 = nn.Conv3d(128, 128, kernel_size=(3, 1, 1), dilation=(1, 1, 1))
         self.conv3d_5 = nn.Conv3d(128, 256, kernel_size=(1, 3, 3), dilation=(1, 4, 4))
 
-    def forward(self, x):
-        out = self.relu(self.embedding_net(x))
-        print(out.shape)
-        out = self.relu(self.conv3d_1(out[:, :, :, :, None]))
+    def forward(self, x1, x2, x3, x4):
+        out_1 = self.relu(self.embedding_net(x1))[:, None, :, :, :]
+        out_2 = self.relu(self.embedding_net(x2))[:, None, :, :, :]
+        out_3 = self.relu(self.embedding_net(x3))[:, None, :, :, :]
+        out_4 = self.relu(self.embedding_net(x4))[:, None, :, :, :]
+        out = torch.cat((out_1, out_2, out_3, out_4), axis=1)
+        # out = out.reshape([-1, 4] + list(out.shape[1:]))
+        # print(out.shape)
+        out = self.relu(self.conv3d_1(out))
         out = self.relu(self.conv3d_2(out))
         out = self.relu(self.conv3d_3(out))
         out = self.relu(self.conv3d_4(out))
