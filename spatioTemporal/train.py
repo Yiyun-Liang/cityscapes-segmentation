@@ -94,9 +94,8 @@ def train(epoch):
 def test(epoch):
     global best_loss
     temporal_net.eval()
-    losses = []
-    num_correct = 0
-    total_num = 0
+    matches, losses = [], []
+
     with torch.no_grad():
         for batch_idx, (inputs, label) in tqdm.tqdm(enumerate(testloader), total=len(testloader)):
             frame1, frame2, frame3 = inputs[0], inputs[1], inputs[2]
@@ -108,24 +107,24 @@ def test(epoch):
                 label = label.to(device)
 
             predicted_label = temporal_net(frame1, frame2, frame3)
+
+            _, pred_idx = predicted_label.max(1)
+            match = (pred_idx==label).data
+
             loss = criterion(predicted_label, label)
             losses.append(loss.detach().cpu())
-            for index, item in enumerate(predicted_label):
-            	total_num += 1
-            	item = item.cpu().numpy().tolist()
-            	predicted_class = item.index(max(item))
-            	target_class = label[index]
-            	if int(predicted_class) == int(target_class):
-            		num_correct += 1
-            	#print(predicted_class, target_class)
+            matches.append(match.cpu())
+
+    # Compute training indicators
+    accuracy = torch.cat(matches, 0).float().mean()
 
     loss = torch.stack(losses).mean()
-    accuracy = num_correct/total_num
 
     log_value('Validation Total Loss', loss, epoch)
     log_str = 'Test Epoch: %d | Loss: %.3f'%(epoch, loss)
     writer.add_scalar('Loss/val', loss.item(), epoch)
     writer.add_scalar('Accuracy/val', accuracy, epoch)
+    print('Test Accuracy:', accuracy)
 
     print(log_str)
     rnet_state_dict = temporal_net.module.state_dict() if args.parallel else temporal_net.state_dict()
@@ -180,6 +179,6 @@ for epoch in range(start_epoch, start_epoch+args.max_epochs+1):
     print('Start training epoch {}'.format(epoch))
     #adjust_learning_rate(epoch, args)
     #train(epoch)
-    if epoch % 5 == 0:
-        test(epoch)
+    #if epoch % 5 == 0:
+    test(epoch)
 writer.close()
