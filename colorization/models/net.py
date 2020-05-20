@@ -43,11 +43,11 @@ class ColorNet(nn.Module):
         self.embedding_net = embedding_net
         self.consecutiveFrame = consecutiveFrame
         self.relu = nn.ReLU(inplace=True)
-        self.conv3d_1 = nn.Conv3d(2048, 128, kernel_size=(1, 1, 1), dilation=(1, 1, 1))
-        self.conv3d_2 = nn.Conv3d(128, 128, kernel_size=(1, 1, 1), dilation=(3, 1, 1))
-        self.conv3d_3 = nn.Conv3d(128, 128, kernel_size=(1, 1, 1), dilation=(1, 2, 2))
-        self.conv3d_4 = nn.Conv3d(128, 128, kernel_size=(1, 1, 1), dilation=(1, 2, 2))
-        self.conv3d_5 = nn.Conv3d(128, 256, kernel_size=(1, 1, 1), dilation=(1, 1, 1))
+        self.conv3d_1 = nn.Conv3d(2048, 128, kernel_size=(1, 3, 3), dilation=(1, 1, 1))
+        self.conv3d_2 = nn.Conv3d(128, 128, kernel_size=(3, 1, 1), dilation=(1, 1, 1))
+        self.conv3d_3 = nn.Conv3d(128, 128, kernel_size=(1, 3, 3), dilation=(1, 2, 2))
+        self.conv3d_4 = nn.Conv3d(128, 128, kernel_size=(3, 1, 1), dilation=(1, 1, 1))
+        self.conv3d_5 = nn.Conv3d(128, 256, kernel_size=(1, 3, 3), dilation=(1, 4, 4))
 
     def forward(self, x):
         out = self.relu(self.embedding_net(x))
