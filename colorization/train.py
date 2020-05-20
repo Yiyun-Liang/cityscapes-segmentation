@@ -87,7 +87,7 @@ def train(epoch):
         # output_4 = colornet(frame4)
         # output = torch.cat((output_1[:, None, ...], output_2[:, None, ...], output_3[:, None, ...], output_4[:, None, ...]), axis=1)
         output = colornet(frame1, frame2, frame3, frame4)
-        print(output.shape)
+        # print(output.shape)
         # raise
         left_term = output[:, :-1, ...]
         right_term = torch.cat((output[:, -1:, ...], output[:, -1:, ...], output[:, -1:, ...]), axis=1)
@@ -113,7 +113,7 @@ def train(epoch):
         
         
         # max_cls = torch.argmax(colorPred, -1)
-
+        print(colorPred.shape)
 
 
 

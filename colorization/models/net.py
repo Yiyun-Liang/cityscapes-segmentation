@@ -42,7 +42,7 @@ class ColorNet(nn.Module):
         super(ColorNet, self).__init__()
         self.embedding_net = embedding_net
         self.consecutiveFrame = consecutiveFrame
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.ReLU()
         self.conv3d_1 = nn.Conv3d(2048, 128, kernel_size=(1, 2, 2), dilation=(1, 1, 1))
         self.conv3d_2 = nn.Conv3d(128, 128, kernel_size=(1, 2, 2), dilation=(1, 1, 1))
         self.conv3d_3 = nn.Conv3d(128, 128, kernel_size=(1, 2, 2), dilation=(1, 1, 1))
@@ -57,9 +57,9 @@ class ColorNet(nn.Module):
         out = torch.cat((out_1, out_2, out_3, out_4), axis=2)
         # out = out.reshape([-1, 4] + list(out.shape[1:]))
         # print(out.shape)
-        print(x1.shape)
-        print(self.embedding_net(x1).shape)
-        print(out.shape)
+        # print(x1.shape)
+        # print(self.embedding_net(x1).shape)
+        # print(out.shape)
         out = self.relu(self.conv3d_1(out))
         out = self.relu(self.conv3d_2(out))
         out = self.relu(self.conv3d_3(out))
