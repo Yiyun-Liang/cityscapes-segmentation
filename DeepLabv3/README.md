@@ -1,6 +1,10 @@
 # DeepLabv3.pytorch
 
-Train with `python main.py --train --dataset cityscapes --exp lr1e-2_crop769_batch20_lastmult10_scratch --epochs 480 --base_lr 0.01 --crop_size 769 --batch_size 5 --last_mult 10`
+Train with ImageNet pretrained model `python main.py --train --dataset cityscapes --exp lr1e-2_crop769_batch20_lastmult10_im --epochs 480 --base_lr 0.01 --crop_size 769 --batch_size 5 --last_mult 10`
+
+Train from scratch `python main.py --train --dataset cityscapes --exp lr1e-2_crop769_batch20_lastmult10_scratch --epochs 480 --base_lr 0.01 --crop_size 769 --batch_size 5 --last_mult 10 --scratch`
+
+Train from custom pretext pretrained model `python main.py --train --dataset cityscapes --exp lr1e-2_crop769_batch20_lastmult10_scratch --epochs 480 --base_lr 0.01 --crop_size 769 --batch_size 5 --last_mult 10 --custom ../triplet/cv/tmp/ckpt_E_50.pth`
 
 Test with `python main.py --dataset cityscapes --epochs 100 --crop_size 769 --exp lr1e-2_crop769_batch20_lastmult10_scratch`
 

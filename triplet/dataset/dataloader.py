@@ -60,7 +60,7 @@ class CityscapesVideos(Dataset):
 
 
 class TripletCityscapesVideos(Dataset):
-    def __init__(self, csv_path, transform, frame_idxs, n_rows, test=False):
+    def __init__(self, csv_path, transform, frame_idxs, num_rows=None, test=False):
         """
         Args:
             csv_path (string): path to csv file
@@ -73,7 +73,11 @@ class TripletCityscapesVideos(Dataset):
         # Transforms
         self.transforms = transform
         # Read the csv file
-        self.data_info = pd.read_csv(csv_path, header=0, nrows=n_rows)
+        if num_rows is None:
+            self.data_info = pd.read_csv(csv_path, header=0)
+        else:
+            self.data_info = pd.read_csv(csv_path, header=0, nrows=num_rows)
+
         # First column contains the image paths
         self.image_arr = np.asarray(self.data_info['path'])
         self.seq_arr = np.asarray(self.data_info['sequence'])

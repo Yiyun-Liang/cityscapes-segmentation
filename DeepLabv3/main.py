@@ -14,6 +14,7 @@ import deeplab
 from pascal import VOCSegmentation
 from cityscapes import Cityscapes
 from utils import AverageMeter, inter_and_union
+from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train', action='store_true', default=False,
@@ -50,8 +51,33 @@ parser.add_argument('--resume', type=str, default=None,
                     help='path to checkpoint to resume from')
 parser.add_argument('--workers', type=int, default=4,
                     help='number of data loading workers')
+parser.add_argument('--custom', type=str, default=None,
+                    help='path to custom ckpt')
 args = parser.parse_args()
 
+def get_miou(model, dataset, writer, global_step):
+  torch.cuda.set_device(args.gpu)
+  model = model.cuda()
+  model.eval()
+
+  inter_meter = AverageMeter()
+  union_meter = AverageMeter()
+  with torch.no_grad():
+    for i in range(len(dataset)):
+      inputs, target = dataset[i]
+      inputs = Variable(inputs.cuda())
+      outputs = model(inputs.unsqueeze(0))
+      _, pred = torch.max(outputs, 1)
+      pred = pred.data.cpu().numpy().squeeze().astype(np.uint8)
+      mask = target.numpy().astype(np.uint8)
+
+      inter, union = inter_and_union(pred, mask, len(dataset.CLASSES))
+      inter_meter.update(inter)
+      union_meter.update(union)
+
+    iou = inter_meter.sum / (union_meter.sum + 1e-10)
+    print('Mean IoU: {0:.2f}'.format(iou.mean() * 100))
+    writer.add_scalar('miou', iou.mean(), global_step)
 
 def main():
   assert torch.cuda.is_available()
@@ -64,11 +90,15 @@ def main():
   elif args.dataset == 'cityscapes':
     dataset = Cityscapes('/ssd',
         train=args.train, crop_size=args.crop_size)
+
+    test_dataset = Cityscapes('/ssd',
+        train=False, crop_size=args.crop_size)
   else:
     raise ValueError('Unknown dataset: {}'.format(args.dataset))
   if args.backbone == 'resnet101':
     model = getattr(deeplab, 'resnet101')(
         pretrained=(not args.scratch),
+        custom=args.custom,
         num_classes=len(dataset.CLASSES),
         num_groups=args.groups,
         weight_std=args.weight_std,
@@ -76,9 +106,13 @@ def main():
   else:
     raise ValueError('Unknown backbone: {}'.format(args.backbone))
 
+  writer = SummaryWriter(comment=f'LR_{args.lr}_BS_{args.batch_size}')
+  global_step = 0
   if args.train:
+    print('training')
     criterion = nn.CrossEntropyLoss(ignore_index=255)
     model = nn.DataParallel(model).cuda()
+    model = model.cuda()
     model.train()
     if args.freeze_bn:
       for m in model.modules():
@@ -118,6 +152,7 @@ def main():
         print('=> no checkpoint found at {0}'.format(args.resume))
 
     for epoch in range(start_epoch, args.epochs):
+      epoch_loss = []
       for i, (inputs, target) in enumerate(dataset_loader):
         cur_iter = epoch * len(dataset_loader) + i
         lr = args.base_lr * (1 - float(cur_iter) / max_iter) ** 0.9
@@ -132,6 +167,9 @@ def main():
           pdb.set_trace()
         losses.update(loss.item(), args.batch_size)
 
+        writer.add_scalar('Loss/train', loss.item(), global_step)
+        global_step += 1
+
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
@@ -142,6 +180,10 @@ def main():
               'loss: {loss.val:.4f} ({loss.ema:.4f})'.format(
               epoch + 1, i + 1, len(dataset_loader), lr, loss=losses))
 
+      writer.add_scalar('learning_rate0', optimizer.param_groups[0]['lr'], epoch)
+      writer.add_scalar('learning_rate1', optimizer.param_groups[1]['lr'], epoch)
+      get_miou(model, test_dataset, writer, global_step)
+
       if (epoch+1) % 5 == 0:
         torch.save({
           'epoch': epoch + 1,
@@ -150,6 +192,7 @@ def main():
           }, model_fname % (epoch + 1))
 
   else:
+    print('testing')
     torch.cuda.set_device(args.gpu)
     model = model.cuda()
     model.eval()
@@ -184,6 +227,7 @@ def main():
         print('IoU {0}: {1:.2f}'.format(dataset.CLASSES[i], val * 100))
       print('Mean IoU: {0:.2f}'.format(iou.mean() * 100))
 
+  writer.close()
 
 if __name__ == "__main__":
   main()

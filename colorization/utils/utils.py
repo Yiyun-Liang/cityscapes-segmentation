@@ -20,23 +20,23 @@ def get_transforms():
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
     transform_train = transforms.Compose([
-       transforms.Resize((128,256)),
+       transforms.Resize((128, 128)),
        transforms.ToTensor(),
        transforms.Normalize(mean, std)
     ])
     transform_test = transforms.Compose([
-       transforms.Resize((128,256)),
+       transforms.Resize((128, 128)),
        transforms.ToTensor(),
        transforms.Normalize(mean, std)
     ])
 
     transform_train_sat = transforms.Compose([
-       transforms.Resize((128,256)),
+       transforms.Resize((128, 128)),
        transforms.ToTensor(),
        transforms.Normalize(mean, std)
     ])
     transform_test_sat = transforms.Compose([
-       transforms.Resize((128,256)),
+       transforms.Resize((128, 128)),
        transforms.ToTensor(),
        transforms.Normalize(mean, std)
     ])
@@ -72,7 +72,7 @@ def save_images(outputs, batch_idx, out_dir):
 
 def get_dataset(train_dir,  test_dir, frames):
     transform_train, transform_test, transform_train_sat, transform_test_sat = get_transforms()
-    trainset = TemporalVideoDataset(train_dir, transform_train, frames, 1000)
-    testset = TemporalVideoDataset(test_dir, transform_test, frames, 200)
+    trainset = TemporalVideoDataset(train_dir, transform_train, frames, 10)
+    testset = TemporalVideoDataset(test_dir, transform_test, frames, 2)
 
     return trainset, testset
