@@ -1,1 +1,1 @@
-Namespace(batch_size=8, ckpt_dir=None, cv_dir='cv/tmp/', data_dir='/ssd/leftImg8bit_sequence', epoch_step=10000, frames=None, lr=0.001, max_epochs=10000, num_workers=8, parallel=False, test_dir='../spatioTemporal/video_val_filelist.csv', train_dir='../spatioTemporal/video_train_filelist.csv')
+Namespace(batch_size=8, ckpt_dir=None, cv_dir='cv/tmp/', data_dir='/ssd/leftImg8bit_sequence', epoch_step=10000, frames=None, lr=0.001, max_epochs=10000, num_workers=8, parallel=False, test_dir='../video_val_filelist.csv', train_dir='../video_train_filelist.csv')

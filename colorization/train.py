@@ -34,7 +34,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 import argparse
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
-parser.add_argument('--lr', type=float, default=1e-7, help='learning rate')
+parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
 parser.add_argument('--data_dir', default='data/', help= 'data directory')
 parser.add_argument('--train_dir', default='data/', help='training data directory')
 parser.add_argument('--test_dir', default='data/', help='test data directory')
@@ -63,7 +63,8 @@ def train(epoch):
 
 
         label = torch.cat((label[0][:, None, :, :, :], label[1][:, None, :, :, :], label[2][:, None, :, :, :], label[3][:, None, :, :, :]), axis=1)
-
+        # print(label)
+        #raise
         frames = torch.cat((frame1, frame2, frame3, frame4), axis=0)
 
         #frame1 = torch.cat((frame1, frame1, frame1), dim=1)
@@ -99,9 +100,10 @@ def train(epoch):
         right_term = torch.reshape(right_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
 
         feature_prod = torch.matmul(left_term, right_term.transpose(2, 1))
-        feature_prod = nn.Softmax(1)(feature_prod)
+        # feature_prod = nn.Softmax(1)(feature_prod)
         label = label.transpose(-1, -2)
         label = label.transpose(-1, -3)
+
         ref_colorGT = label[:, :3, ...]
         tar_colorGT = torch.cat((label[:, -1:, ...], label[:, -1:, ...], label[:, -1:, ...]), axis=1)
 
@@ -111,7 +113,7 @@ def train(epoch):
                                          + [tar_colorGT.shape[-1]])
 
         pred_color = torch.matmul(ref_colorGT_reshape, feature_prod.transpose(2, 1))
-        pred_color = nn.Softmax(-1)(pred_color)
+        # pred_color = nn.Softmax(-1)(pred_color)
 
         colorPred = torch.reshape(pred_color, [-1] + [3]
                                      + list(label.shape)[2:])
