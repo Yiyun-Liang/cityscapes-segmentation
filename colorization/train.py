@@ -191,6 +191,8 @@ def test(epoch):
             # output_4 = colornet(frame4)
             # output = torch.cat((output_1[:, None, ...], output_2[:, None, ...], output_3[:, None, ...], output_4[:, None, ...]), axis=1)
             output = colornet(frame1, frame2, frame3, frame4)
+            output = output.transpose(-1, -2)
+            output = output.transpose(-1, -3)
             # print(output.shape)
             # raise
             left_term = output[:, :-1, ...]
@@ -201,6 +203,9 @@ def test(epoch):
 
             feature_prod = torch.matmul(left_term, right_term.transpose(2, 1))
             feature_prod = nn.Softmax(1)(feature_prod)
+            label = label.transpose(-1, -2)
+            label = label.transpose(-1, -3)
+
             ref_colorGT = label[:, :3, ...]
             tar_colorGT = torch.cat((label[:, -1:, ...], label[:, -1:, ...], label[:, -1:, ...]), axis=1)
 
@@ -210,7 +215,7 @@ def test(epoch):
                                              + [tar_colorGT.shape[-1]])
 
             pred_color = torch.matmul(ref_colorGT_reshape, feature_prod.transpose(2, 1))
-            pred_color = nn.Softmax(-1)(pred_color)
+            # pred_color = nn.Softmax(-1)(pred_color)
 
             colorPred = torch.reshape(pred_color, [-1] + [3]
                                          + list(label.shape)[2:])
