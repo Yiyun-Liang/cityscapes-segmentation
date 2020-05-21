@@ -34,7 +34,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 import argparse
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
-parser.add_argument('--lr', type=float, default=1e-5, help='learning rate')
+parser.add_argument('--lr', type=float, default=1e-7, help='learning rate')
 parser.add_argument('--data_dir', default='data/', help= 'data directory')
 parser.add_argument('--train_dir', default='data/', help='training data directory')
 parser.add_argument('--test_dir', default='data/', help='test data directory')
@@ -113,11 +113,11 @@ def train(epoch):
                                      + list(label.shape)[2:])
         
         
-        max_cls = torch.argmax(colorPred, 1)
+        max_cls = torch.max(colorPred, 1)
 
 
-
-        loss = criterion(colorPred, label[:, 3, ...].long())
+        # print(colorPred[:, -1, ...].shape, label[:, 3, ...].shape)
+        loss = criterion(colorPred + 1e-9, (label[:, 3, ...] + 1e-9).long())
         
 
         #l1.append(criterion1.cpu())
@@ -210,11 +210,11 @@ def test(epoch):
                                          + list(label.shape)[2:])
             
             
-            max_cls = torch.argmax(colorPred, 1)
+            max_cls = torch.max(colorPred, 1)
 
 
 
-            loss = criterion(colorPred, label[:, 3, ...].long())
+            loss = criterion(colorPred + 1e-9, (label[:, 3, ...] + 1e-9).long())
 
             #l1.append(criterion1.cpu())
             #ssim_loss.append(criterion2.detach().cpu())
