@@ -26,8 +26,8 @@ class TemporalVideoDataset(Dataset):
         # Transforms
         self.transforms = transform
         # Read the csv file
-        # self.data_info = pd.read_csv(csv_path, header=0, nrows=n_rows)
-        self.data_info = pd.read_csv(csv_path, header=0)
+        self.data_info = pd.read_csv(csv_path, header=0, nrows=n_rows)
+        # self.data_info = pd.read_csv(csv_path, header=0)
         # First column contains the image paths
         self.image_arr = np.asarray(self.data_info['path'])
         self.seq_arr = np.asarray(self.data_info['sequence'])
