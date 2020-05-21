@@ -21,24 +21,20 @@ def get_transforms():
     std = [0.229, 0.224, 0.225]
     transform_train = transforms.Compose([
        transforms.Resize((128, 128)),
-       transforms.ToTensor(),
-       transforms.Normalize(mean, std)
+       transforms.ToTensor()
     ])
     transform_test = transforms.Compose([
        transforms.Resize((128, 128)),
-       transforms.ToTensor(),
-       transforms.Normalize(mean, std)
+       transforms.ToTensor()
     ])
 
     transform_train_sat = transforms.Compose([
        transforms.Resize((128, 128)),
-       transforms.ToTensor(),
-       transforms.Normalize(mean, std)
+       transforms.ToTensor()
     ])
     transform_test_sat = transforms.Compose([
        transforms.Resize((128, 128)),
-       transforms.ToTensor(),
-       transforms.Normalize(mean, std)
+       transforms.ToTensor()
     ])
 
     return transform_train, transform_test, transform_train_sat, transform_test_sat
