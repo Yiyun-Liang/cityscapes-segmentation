@@ -63,10 +63,11 @@ def train(epoch):
 
 
         label = torch.cat((label[0][:, None, :, :, :], label[1][:, None, :, :, :], label[2][:, None, :, :, :], label[3][:, None, :, :, :]), axis=1)
-        # print(label)
+        print(label.shape)
         #raise
         frames = torch.cat((frame1, frame2, frame3, frame4), axis=0)
-
+        print(frames.shape)
+        # raise
         #frame1 = torch.cat((frame1, frame1, frame1), dim=1)
         #frame2 = torch.cat((frame2, frame2, frame2), dim=1)
         #frame3 = torch.cat((frame3, frame3, frame3), dim=1)
@@ -91,7 +92,7 @@ def train(epoch):
         output = colornet(frame1, frame2, frame3, frame4)
         output = output.transpose(-1, -2)
         output = output.transpose(-1, -3)
-        # print(output.shape)
+        print(output.shape)
         # raise
         left_term = output[:, :-1, ...]
         right_term = torch.cat((output[:, -1:, ...], output[:, -1:, ...], output[:, -1:, ...]), axis=1)
@@ -100,6 +101,9 @@ def train(epoch):
         right_term = torch.reshape(right_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
 
         feature_prod = torch.matmul(left_term, right_term.transpose(2, 1))
+        print(left_term.shape)
+        print(right_term.transpose(2, 1).shape)
+        print(feature_prod.shape)
         # feature_prod = nn.Softmax(1)(feature_prod)
         label = label.transpose(-1, -2)
         label = label.transpose(-1, -3)
@@ -111,7 +115,7 @@ def train(epoch):
                                          + [ref_colorGT.shape[-1]])
         tar_colorGT_reshape = torch.reshape(tar_colorGT, [-1] + [tar_colorGT.shape[-3] * tar_colorGT.shape[-2]]
                                          + [tar_colorGT.shape[-1]])
-
+        print(ref_colorGT_reshape.shape, feature_prod.transpose(2, 1).shape)
         pred_color = torch.matmul(ref_colorGT_reshape, feature_prod.transpose(2, 1))
         # pred_color = nn.Softmax(-1)(pred_color)
 
@@ -214,9 +218,9 @@ def test(epoch):
             tar_colorGT_reshape = torch.reshape(tar_colorGT, [-1] + [tar_colorGT.shape[-3] * tar_colorGT.shape[-2]]
                                              + [tar_colorGT.shape[-1]])
 
-            pred_color = torch.matmul(ref_colorGT_reshape, feature_prod.transpose(2, 1))
+            #pred_color = torch.matmul(ref_colorGT_reshape, feature_prod.transpose(2, 1))
             # pred_color = nn.Softmax(-1)(pred_color)
-
+            pred_color = torch.matmul(feature_prod.transpose(2, 1), ref_colorGT_reshape)
             colorPred = torch.reshape(pred_color, [-1] + [3]
                                          + list(label.shape)[2:])
             

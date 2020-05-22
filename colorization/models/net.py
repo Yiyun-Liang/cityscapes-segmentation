@@ -66,6 +66,8 @@ class ColorNet(nn.Module):
         out = self.relu(self.conv3d_4(out))
         out = self.relu(self.conv3d_5(out))
         out = out.transpose(2, 1)
+        #print(out.shape)
+        #raise
         return out
 
         
