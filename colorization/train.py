@@ -102,6 +102,7 @@ def train(epoch):
 
         feature_prod = torch.matmul(left_term.transpose(2, 1), right_term)
         feature_prod = torch.reshape(feature_prod, [-1] + [feature_prod.shape[-2] * feature_prod.shape[-1]])
+        feature_prod = torch.cat((feature_prod[..., None], feature_prod[..., None], feature_prod[..., None]), axis=-1)
         # print(left_term.shape)
         # print(right_term.transpose(2, 1).shape)
         # print(feature_prod.shape)
