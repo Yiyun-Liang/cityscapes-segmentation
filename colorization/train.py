@@ -34,7 +34,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 import argparse
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
-parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
+parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
 parser.add_argument('--data_dir', default='data/', help= 'data directory')
 parser.add_argument('--train_dir', default='data/', help='training data directory')
 parser.add_argument('--test_dir', default='data/', help='test data directory')
@@ -124,10 +124,11 @@ def train(epoch):
         
         
         max_cls = torch.max(colorPred, 1)
-
-
+        # print(colorPred)
+        #print(colorPred.shape)
+        #print(label[:, 3, ...].shape)
         # print(colorPred[:, -1, ...].shape, label[:, 3, ...].shape)
-        loss = criterion(colorPred + 1e-9, (label[:, 3, ...] + 1e-9).long())
+        loss = criterion(colorPred + 1e-9, tar_colorGT + 1e-9)
         
 
         #l1.append(criterion1.cpu())
@@ -220,16 +221,17 @@ def test(epoch):
 
             #pred_color = torch.matmul(ref_colorGT_reshape, feature_prod.transpose(2, 1))
             # pred_color = nn.Softmax(-1)(pred_color)
-            pred_color = torch.matmul(feature_prod.transpose(2, 1), ref_colorGT_reshape)
+            pred_color = ref_colorGT_reshape * feature_prod.transpose(2, 1)
             colorPred = torch.reshape(pred_color, [-1] + [3]
                                          + list(label.shape)[2:])
             
-            
+            # print(colorPred.shape)
+            # print(label[:, 3, ...].shape)            
             max_cls = torch.max(colorPred, 1)
 
 
 
-            loss = criterion(colorPred + 1e-9, (label[:, 3, ...] + 1e-9).long())
+            loss = criterion(colorPred + 1e-9, tar_colorGT + 1e-9)
 
             #l1.append(criterion1.cpu())
             #ssim_loss.append(criterion2.detach().cpu())
