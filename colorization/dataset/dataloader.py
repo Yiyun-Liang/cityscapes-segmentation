@@ -59,13 +59,13 @@ class TemporalVideoDataset(Dataset):
         first_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(start_frame).zfill(6))
         first_img = Image.open(first_image_name)
 
-        second_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(start_frame+1).zfill(6))
+        second_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(start_frame+3).zfill(6))
         second_img = Image.open(second_image_name)
 
-        third_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(start_frame+2).zfill(6))
+        third_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(start_frame+6).zfill(6))
         third_img = Image.open(third_image_name)
 
-        last_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(start_frame+3).zfill(6))
+        last_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(start_frame+9).zfill(6))
         last_img = Image.open(last_image_name)
 
         # Transform the images
