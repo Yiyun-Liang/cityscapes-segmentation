@@ -130,6 +130,12 @@ def train(epoch):
         #print(colorPred.shape)
         #print(label[:, 3, ...].shape)
         # print(colorPred[:, -1, ...].shape, label[:, 3, ...].shape)
+        print(colorPred.shape)
+        print(tar_colorGT.shape)
+        print(ref_colorGT_reshape.shape)
+        print(feature_prod.shape)
+        print(pred_color.shape)
+        raise
         loss = criterion(colorPred + 1e-9, tar_colorGT + 1e-9)
         
 
