@@ -100,7 +100,7 @@ def train(epoch):
         left_term = torch.reshape(left_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
         right_term = torch.reshape(right_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
 
-        feature_prod = torch.matmul(left_term.transpose(2, 1), right_term)
+        feature_prod = torch.matmul(right_term.transpose(2, 1), left_term)
         feature_prod = torch.reshape(feature_prod, [-1] + [feature_prod.shape[-2] * feature_prod.shape[-1]])
         feature_prod = torch.cat((feature_prod[..., None], feature_prod[..., None], feature_prod[..., None]), axis=-1)
         # print(left_term.shape)
@@ -130,12 +130,12 @@ def train(epoch):
         #print(colorPred.shape)
         #print(label[:, 3, ...].shape)
         # print(colorPred[:, -1, ...].shape, label[:, 3, ...].shape)
-        print(colorPred.shape)
-        print(tar_colorGT.shape)
-        print(ref_colorGT_reshape.shape)
-        print(feature_prod.shape)
-        print(pred_color.shape)
-        raise
+        # print(colorPred.shape)
+        # print(tar_colorGT.shape)
+        # print(ref_colorGT_reshape.shape)
+        # print(feature_prod.shape)
+        # print(pred_color.shape)
+        # raise
         loss = criterion(colorPred + 1e-9, tar_colorGT + 1e-9)
         
 
@@ -214,7 +214,7 @@ def test(epoch):
             left_term = torch.reshape(left_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
             right_term = torch.reshape(right_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
 
-            feature_prod = torch.matmul(left_term.transpose(2, 1), right_term)
+            feature_prod = torch.matmul(right_term.transpose(2, 1), left_term)
             feature_prod = torch.reshape(feature_prod, [-1] + [feature_prod.shape[-2] * feature_prod.shape[-1]])
             feature_prod = torch.cat((feature_prod[..., None], feature_prod[..., None], feature_prod[..., None]), axis=-1)
             label = label.transpose(-1, -2)
