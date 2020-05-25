@@ -23,7 +23,7 @@ parser.add_argument('--exp', type=str, required=True,
                     help='name of experiment')
 parser.add_argument('--gpu', type=int, default=0,
                     help='test time gpu device id')
-parser.add_argument('--backbone', type=str, default='resnet101',
+parser.add_argument('--backbone', type=str, default='resnet50',
                     help='resnet101')
 parser.add_argument('--dataset', type=str, default='cityscapes',
                     help='pascal or cityscapes')
@@ -80,7 +80,7 @@ def get_miou(model, dataset, writer, global_step):
 def main():
   assert torch.cuda.is_available()
   torch.backends.cudnn.benchmark = True
-  model_fname = 'data/deeplab_{0}_{1}_v3_{2}_epoch%d.pth'.format(
+  model_fname = '/ssd/deeplabv3/deeplab_{0}_{1}_v3_{2}_epoch%d.pth'.format(
       args.backbone, args.dataset, args.exp)
   if args.dataset == 'pascal':
     dataset = VOCSegmentation('data/VOCdevkit',
@@ -101,10 +101,18 @@ def main():
         num_groups=args.groups,
         weight_std=args.weight_std,
         beta=args.beta)
+  elif args.backbone == 'resnet50':
+    model = getattr(deeplab, 'resnet50')(
+        pretrained=(not args.scratch),
+        custom=args.custom,
+        num_classes=len(dataset.CLASSES),
+        num_groups=args.groups,
+        weight_std=args.weight_std,
+        beta=args.beta)
   else:
     raise ValueError('Unknown backbone: {}'.format(args.backbone))
 
-  writer = SummaryWriter(comment=f'LR_{args.lr}_BS_{args.batch_size}')
+  writer = SummaryWriter(comment=f'LR_{args.base_lr}_BS_{args.batch_size}')
   global_step = 0
   if args.train:
     print('training')
@@ -150,6 +158,7 @@ def main():
         print('=> no checkpoint found at {0}'.format(args.resume))
 
     for epoch in range(start_epoch, args.epochs):
+      epoch_loss = []
       model.train()
       for i, (inputs, target) in enumerate(dataset_loader):
         cur_iter = epoch * len(dataset_loader) + i
@@ -182,7 +191,7 @@ def main():
       writer.add_scalar('learning_rate1', optimizer.param_groups[1]['lr'], epoch)
       get_miou(model, test_dataset, writer, global_step)
 
-      if (epoch+1) % 5 == 0:
+      if (epoch+1) % 10 == 0:
         torch.save({
           'epoch': epoch + 1,
           'state_dict': model.state_dict(),

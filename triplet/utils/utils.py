@@ -21,6 +21,7 @@ def get_transforms():
     std = [0.229, 0.224, 0.225]
     transform_train = transforms.Compose([
        transforms.Resize((128,256)),
+       transforms.RandomHorizontalFlip(),
        transforms.ToTensor(),
        transforms.Normalize(mean, std)
     ])

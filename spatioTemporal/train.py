@@ -35,7 +35,7 @@ import argparse
 from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
-parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
+parser.add_argument('--lr', type=float, default=1e-5, help='learning rate')
 parser.add_argument('--data_dir', default='data/', help= 'data directory')
 parser.add_argument('--train_dir', default='data/', help='training data directory')
 parser.add_argument('--test_dir', default='data/', help='test data directory')
@@ -88,14 +88,14 @@ def train(epoch):
     #log_value('Train SSIM Loss', ssim_loss, epoch)
     log_str = 'Train Epoch: %d | Loss: %.3f'%(epoch, loss)
     writer.add_scalar('Loss/train', loss.item(), epoch)
-    writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], epoch)
+    writer.add_scalar('label_frame', optimizer.param_groups[0]['lr'], epoch)
     print(log_str)
 
 def test(epoch):
     global best_loss
     temporal_net.eval()
-    #l1, ssim_loss = [], []
     matches, losses = [], []
+
     with torch.no_grad():
         for batch_idx, (inputs, label) in tqdm.tqdm(enumerate(testloader), total=len(testloader)):
             frame1, frame2, frame3 = inputs[0], inputs[1], inputs[2]
@@ -107,19 +107,24 @@ def test(epoch):
                 label = label.to(device)
 
             predicted_label = temporal_net(frame1, frame2, frame3)
-            loss = criterion(predicted_label, label)
 
+            _, pred_idx = predicted_label.max(1)
+            match = (pred_idx==label).data
+
+            loss = criterion(predicted_label, label)
             losses.append(loss.detach().cpu())
+            matches.append(match.cpu())
+
+    # Compute training indicators
+    accuracy = torch.cat(matches, 0).float().mean()
 
     loss = torch.stack(losses).mean()
-    #l1_loss = torch.stack(l1).mean()
-    #ssim_loss = torch.stack(ssim_loss).mean()
 
     log_value('Validation Total Loss', loss, epoch)
-    #log_value('Validation L1 Loss', l1_loss, epoch)
-    #log_value('Validation MSSSIM Loss', ssim_loss, epoch)
     log_str = 'Test Epoch: %d | Loss: %.3f'%(epoch, loss)
     writer.add_scalar('Loss/val', loss.item(), epoch)
+    writer.add_scalar('Accuracy/val', accuracy, epoch)
+    print('Test Accuracy:', accuracy)
 
     print(log_str)
     rnet_state_dict = temporal_net.module.state_dict() if args.parallel else temporal_net.state_dict()
@@ -148,7 +153,7 @@ if c > 0:
 else:
     device = torch.device("cpu")
 
-rnet = models.resnet101(pretrained=False).to(device)
+rnet = models.resnet50(pretrained=False).to(device)
 # Remove the last layer and extract the maxpooling features
 del rnet.fc
 rnet.fc=lambda x:x
@@ -156,10 +161,10 @@ temporal_net = TemporalNet(rnet, 2048, 3).to(device)
 
 start_epoch = 0
 best_loss = 1000
-#if args.ckpt_dir:
-#    ckpt = torch.load(args.ckpt_dir)
-#    rnet.load_state_dict(ckpt['rnet'])
-#    start_epoch = int(args.ckpt_dir.split('_')[-1])
+if args.ckpt_dir:
+    ckpt = torch.load(args.ckpt_dir)
+    temporal_net.load_state_dict(ckpt)
+    start_epoch = int(args.ckpt_dir.split('_')[-1][:-4])
 
 #if c > 1:
 #    rnet = nn.DataParallel(rnet, device_ids=[0, 1, 2, 3])
@@ -173,7 +178,7 @@ criterion = nn.CrossEntropyLoss()
 for epoch in range(start_epoch, start_epoch+args.max_epochs+1):
     print('Start training epoch {}'.format(epoch))
     #adjust_learning_rate(epoch, args)
-    train(epoch)
-    if epoch % 5 == 0:
-        test(epoch)
+    #train(epoch)
+    #if epoch % 5 == 0:
+    test(epoch)
 writer.close()
