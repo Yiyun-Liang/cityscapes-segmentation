@@ -56,8 +56,6 @@ parser.add_argument('--custom', type=str, default=None,
 args = parser.parse_args()
 
 def get_miou(model, dataset, writer, global_step):
-  torch.cuda.set_device(args.gpu)
-  model = model.cuda()
   model.eval()
 
   inter_meter = AverageMeter()
@@ -152,7 +150,7 @@ def main():
         print('=> no checkpoint found at {0}'.format(args.resume))
 
     for epoch in range(start_epoch, args.epochs):
-      epoch_loss = []
+      model.train()
       for i, (inputs, target) in enumerate(dataset_loader):
         cur_iter = epoch * len(dataset_loader) + i
         lr = args.base_lr * (1 - float(cur_iter) / max_iter) ** 0.9
