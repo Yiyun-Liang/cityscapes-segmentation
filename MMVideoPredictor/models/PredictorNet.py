@@ -20,8 +20,11 @@ class SpatioTemporalNet(nn.Module):
 
     def __init__(self, num_frames, num_out_frames):
         super(SpatioTemporalNet, self).__init__()
-        self.num_in_frames = num_frames
+        # pass num_frames input frames thru same encoder
+        # num_out_frames = # out_frames * 3 channels
+        self.num_in_frames = 3
         self.num_out_frames = num_out_frames
+        self.num_frames = num_frames
         self.num_layers = 4
         self.strides = [1,1,1,1]
         self.feature_maps_size = [64,128,256,512]
