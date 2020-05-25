@@ -69,7 +69,7 @@ def train(epoch, device):
             pos = pos.to(device)
             neg = neg.to(device)
 
-        out1, out2, out3 = triplet_net(anchor, pos, neg)
+        out1, out2, out3 = triplet_net([anchor, pos, neg])
         # print(out1.shape) # BxNxHxW
         # calculate loss over features
         # pick k negative samples from the batch to calculate loss on
@@ -111,7 +111,7 @@ def test(epoch, device):
                 pos = pos.to(device)
                 neg = neg.to(device)
 
-            out1, out2, out3 = triplet_net(anchor, pos, neg)
+            out1, out2, out3 = triplet_net([anchor, pos, neg])
             loss = triplet_loss(out1, out2, out3)
             losses.append(loss.cpu())
 

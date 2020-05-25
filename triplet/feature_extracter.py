@@ -58,7 +58,7 @@ def eval(data_loader, device, save_path):
             if not args.parallel:
                 inputs = inputs.to(device)
 
-            out = triplet_net(inputs)
+            out = triplet_net(inputs, feat_ext=True)
             print(len(out))
             print(out[0].shape)
 
