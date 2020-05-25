@@ -101,36 +101,45 @@ class TripletCityscapesVideos(Dataset):
         end_frame = self.end_frames[index]
         annotated_frame = self.annotated_frames[index]
 
-        if self.is_test:
-            anchor = start_frame
+        if self.frame_idxs is not None:
+            img_as_tensor = []
+            for frame_idx in self.frame_idxs:
+                single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(start_frame+frame_idx).zfill(6))
+                img_as_img = Image.open(single_image_name)
+                img_as_img = self.transforms(img_as_img)
+                img_as_tensor.append(img_as_img)
+            return torch.stack(img_as_tensor, dim=0)
         else:
-            anchor = np.random.randint(low=start_frame, high=end_frame+1)
-        single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(anchor).zfill(6))
-        img_as_img = Image.open(single_image_name) #.convert('L')
-        # Transform the image
-        anchor_img = self.transforms(img_as_img)
-        
-        if self.is_test:
-            positive = start_frame+2
-        else:
-            pos_range = np.concatenate((np.arange(np.maximum(anchor-3, start_frame), anchor-1), \
-                                        np.arange(anchor+1, np.minimum(anchor+3, end_frame))))
-            positive = np.random.choice(pos_range)
-        single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(positive).zfill(6))
-        img_as_img = Image.open(single_image_name) #.convert('L')
-        pos = self.transforms(img_as_img)
+            if self.is_test:
+                anchor = start_frame
+            else:
+                anchor = np.random.randint(low=start_frame, high=end_frame+1)
+            single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(anchor).zfill(6))
+            img_as_img = Image.open(single_image_name) #.convert('L')
+            # Transform the image
+            anchor_img = self.transforms(img_as_img)
+            
+            if self.is_test:
+                positive = start_frame+2
+            else:
+                pos_range = np.concatenate((np.arange(np.maximum(anchor-3, start_frame), anchor-1), \
+                                            np.arange(anchor+1, np.minimum(anchor+3, end_frame))))
+                positive = np.random.choice(pos_range)
+            single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(positive).zfill(6))
+            img_as_img = Image.open(single_image_name) #.convert('L')
+            pos = self.transforms(img_as_img)
 
-        if self.is_test:
-            negative = start_frame+10
-        else:
-            neg_range = np.concatenate((np.arange(start_frame, anchor-10), \
-                                        np.arange(anchor+10, end_frame)))
-            negative = np.random.choice(neg_range)
-        single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(negative).zfill(6))
-        img_as_img = Image.open(single_image_name) #.convert('L')
-        neg = self.transforms(img_as_img)
+            if self.is_test:
+                negative = start_frame+10
+            else:
+                neg_range = np.concatenate((np.arange(start_frame, anchor-10), \
+                                            np.arange(anchor+10, end_frame)))
+                negative = np.random.choice(neg_range)
+            single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(negative).zfill(6))
+            img_as_img = Image.open(single_image_name) #.convert('L')
+            neg = self.transforms(img_as_img)
 
-        return (anchor_img, pos, neg)
+            return (anchor_img, pos, neg)
 
     def __len__(self):
         return self.data_len

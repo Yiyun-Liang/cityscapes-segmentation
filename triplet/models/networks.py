@@ -97,6 +97,13 @@ class TripletNet(nn.Module):
         output3 = self.embedding_net(x3)
         return output1, output2, output3
 
+    def forward(self, x):
+        emb_all = []
+        for frame_idx in range(1, x.shape[1], 1):
+            output = self.embedding_net(x[:, frame_idx, :, :, :])
+            emb_all.append(output)
+        return emb_all
+
     def get_embedding(self, x):
         return self.embedding_net(x)
 
