@@ -51,19 +51,19 @@ if not os.path.exists(args.cv_dir):
     os.system('mkdir ' + args.cv_dir)
 utils.save_args(__file__, args)
 
-def eval(data_loader, device):
+def eval(data_loader, device, save_path):
     triplet_net.eval()
     with torch.no_grad():
         for batch_idx, inputs in tqdm.tqdm(enumerate(data_loader), total=len(data_loader)):
-
             if not args.parallel:
                 inputs = inputs.to(device)
 
             out = triplet_net(inputs)
-            print(out.shape)
+            print(len(out))
+            print(out[0].shape)
 
 trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames)
-trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
+#trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 testloader = torchdata.DataLoader(testset, batch_size=int(args.batch_size/2), shuffle=False, num_workers=args.num_workers)
 
 c = torch.cuda.device_count()
@@ -81,7 +81,8 @@ triplet_net = TripletNet(rnet)
 
 if args.ckpt_dir:
     ckpt = torch.load(args.ckpt_dir)
-    triplet_net.load_state_dict(ckpt['triplet_net'])
+    triplet_net.load_state_dict(ckpt)
+    print('loaded ckpt')
 
 if c > 1:
     triplet_net = nn.DataParallel(triplet_net, device_ids=[0, 1, 2, 3])
@@ -89,4 +90,5 @@ triplet_net.to(device)
 
 # Save the configuration to the output directory
 configure(args.cv_dir+'/log', flush_secs=5)
-eval(trainloader, device, 'train_features.csv')
+print('start feature extraction')
+eval(testloader, device, 'train_features.csv')

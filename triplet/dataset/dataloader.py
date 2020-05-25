@@ -100,11 +100,10 @@ class TripletCityscapesVideos(Dataset):
         start_frame = self.start_frames[index]
         end_frame = self.end_frames[index]
         annotated_frame = self.annotated_frames[index]
-
         if self.frame_idxs is not None:
             img_as_tensor = []
             for frame_idx in self.frame_idxs:
-                single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(start_frame+frame_idx).zfill(6))
+                single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(start_frame+int(frame_idx)).zfill(6))
                 img_as_img = Image.open(single_image_name)
                 img_as_img = self.transforms(img_as_img)
                 img_as_tensor.append(img_as_img)

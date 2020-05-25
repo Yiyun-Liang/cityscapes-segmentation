@@ -62,7 +62,7 @@ def save_images(outputs, batch_idx, out_dir):
 
 def get_dataset(train_dir,  test_dir, frames):
     transform_train, transform_test = get_transforms()
-    trainset = TripletCityscapesVideos(train_dir, transform_train, frames, 1000)
-    testset = TripletCityscapesVideos(test_dir, transform_test, frames, 200, test=True)
+    trainset = TripletCityscapesVideos(train_dir, transform_train, frames)
+    testset = TripletCityscapesVideos(test_dir, transform_test, frames, test=True)
 
     return trainset, testset
