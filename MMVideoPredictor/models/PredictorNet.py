@@ -48,7 +48,7 @@ class SpatioTemporalNet(nn.Module):
         self.conv4_3D = base.conv1x1(self.feature_maps_size[3], self.feature_maps_size[3], self.strides[3])
         self.bn4_3D = nn.BatchNorm2d(self.feature_maps_size[3])
 
-        # Embedding Encoder<edit>
+        # Embedding Encoder
         self.emb_conv1_2D = base.conv3x3(self.num_in_frames, self.feature_maps_size[0], self.strides[0])
         self.emb_bn1_2D = nn.BatchNorm2d(self.feature_maps_size[0])
         self.emb_conv1_3D = base.conv1x1(self.feature_maps_size[0], self.feature_maps_size[0], self.strides[0])
