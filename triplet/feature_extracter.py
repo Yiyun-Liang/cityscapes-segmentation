@@ -75,7 +75,7 @@ else:
 
 # rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3*3)
 rnet = models.resnet50()
-rnet = nn.Sequential(*list(rnet.children())[:-1]).to(device)
+rnet = nn.Sequential(*list(rnet.children())[:-2]).to(device)
 triplet_net = TripletNet(rnet)
 
 if args.ckpt_dir:
