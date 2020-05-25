@@ -85,6 +85,8 @@ class SiameseNet(nn.Module):
     def get_embedding(self, x):
         return self.embedding_net(x)
 
+def ReduceChannelNet(nn.Module):
+    
 
 class TripletNet(nn.Module):
     def __init__(self, embedding_net):

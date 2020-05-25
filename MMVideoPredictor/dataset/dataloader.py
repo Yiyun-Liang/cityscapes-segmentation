@@ -63,7 +63,7 @@ class CityscapesVideos(Dataset):
         for idx in self.frame_idxs:
             # Open image
             # eg. <sequence_name>/aachen_000000_000000_leftImg8bit.png
-            single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(start_frame+idx).zfill(6))
+            single_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, seq_id.zfill(6), str(start_frame+int(idx)).zfill(6))
             img_as_img = Image.open(single_image_name) #.convert('L')
             # Transform the image
             img_as_tensor.append(self.transforms(img_as_img))

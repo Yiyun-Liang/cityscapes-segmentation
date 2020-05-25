@@ -1,8 +1,8 @@
 """
 How to Run on CityScapes Dataset:
-    python train.py
-    --train_dir video_train_filelist.csv
-    --test_dir video_val_filelist.csv
+    python feature_extracter.py
+    --train_dir ../video_train_filelist.csv
+    --test_dir ../video_val_filelist.csv
     --ckpt_dir <pth path>
     --frames 0 3 6 9 12
 """
@@ -75,7 +75,8 @@ else:
 
 # rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3*3)
 rnet = models.resnet50()
-rnet = nn.Sequential(*list(rnet.children())[:-1]).to(device)
+# 2048x4x8 -> 128x4x8
+rnet = nn.Sequential(*list(rnet.children())[:-2]).to(device)
 triplet_net = TripletNet(rnet)
 
 if args.ckpt_dir:
