@@ -9,7 +9,7 @@ import shutil
 from PIL import Image
 from random import randint, sample
 
-from dataset.dataloader import CityscapesVideos, TripletCityscapesVideos
+from data.dataloader import CityscapesVideos
 
 def save_args(__file__, args):
     shutil.copy(os.path.basename(__file__), args.cv_dir)
@@ -21,7 +21,6 @@ def get_transforms():
     std = [0.229, 0.224, 0.225]
     transform_train = transforms.Compose([
        transforms.Resize((128,256)),
-       transforms.RandomHorizontalFlip(),
        transforms.ToTensor(),
        transforms.Normalize(mean, std)
     ])
@@ -31,7 +30,18 @@ def get_transforms():
        transforms.Normalize(mean, std)
     ])
 
-    return transform_train, transform_test
+    transform_train_emb = transforms.Compose([
+       transforms.Resize((128,256)),
+       transforms.ToTensor(),
+       transforms.Normalize(mean, std)
+    ])
+    transform_test_emb = transforms.Compose([
+       transforms.Resize((128,256)),
+       transforms.ToTensor(),
+       transforms.Normalize(mean, std)
+    ])
+
+    return transform_train, transform_test, transform_train_emb, transform_test_emb
 
 class UnNormalize(object):
     def __init__(self, mean, std):
@@ -60,9 +70,9 @@ def save_images(outputs, batch_idx, out_dir):
             os.mkdir(out_dir)
         img.save('{}/{}_{}.jpg'.format(out_dir, batch_idx, file_id))
 
-def get_dataset(train_dir,  test_dir, frames):
-    transform_train, transform_test = get_transforms()
-    trainset = TripletCityscapesVideos(train_dir, transform_train, frames)
-    testset = TripletCityscapesVideos(test_dir, transform_test, frames, test=True)
+def get_dataset(train_dir,  test_dir, frames, embeddings):
+    transform_train, transform_test, transform_train_emb, transform_test_emb = get_transforms()
+    trainset = CityscapesVideos(train_dir, transform_train, transform_train_emb, frames, embeddings)
+    testset = CityscapesVideos(test_dir, transform_test, transform_test_emb, frames, embeddings)
 
     return trainset, testset

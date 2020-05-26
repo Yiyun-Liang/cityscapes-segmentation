@@ -55,9 +55,13 @@ parser.add_argument('--custom', type=str, default=None,
                     help='path to custom ckpt')
 args = parser.parse_args()
 
+<<<<<<< HEAD
 def get_miou(model, dataset, writer, epoch, split):
   torch.cuda.set_device(args.gpu)
   model = model.cuda()
+=======
+def get_miou(model, dataset, writer, global_step):
+>>>>>>> 51dac49f324919afd58affa1b727545ad981f326
   model.eval()
 
   inter_meter = AverageMeter()

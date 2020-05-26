@@ -34,7 +34,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 import argparse
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
-parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
+parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
 parser.add_argument('--data_dir', default='data/', help= 'data directory')
 parser.add_argument('--train_dir', default='data/', help='training data directory')
 parser.add_argument('--test_dir', default='data/', help='test data directory')
@@ -63,10 +63,11 @@ def train(epoch):
 
 
         label = torch.cat((label[0][:, None, :, :, :], label[1][:, None, :, :, :], label[2][:, None, :, :, :], label[3][:, None, :, :, :]), axis=1)
-        # print(label)
+        # print(label.shape)
         #raise
         frames = torch.cat((frame1, frame2, frame3, frame4), axis=0)
-
+        # print(frames.shape)
+        # raise
         #frame1 = torch.cat((frame1, frame1, frame1), dim=1)
         #frame2 = torch.cat((frame2, frame2, frame2), dim=1)
         #frame3 = torch.cat((frame3, frame3, frame3), dim=1)
@@ -89,6 +90,8 @@ def train(epoch):
         # output_4 = colornet(frame4)
         # output = torch.cat((output_1[:, None, ...], output_2[:, None, ...], output_3[:, None, ...], output_4[:, None, ...]), axis=1)
         output = colornet(frame1, frame2, frame3, frame4)
+        output = output.transpose(-1, -2)
+        output = output.transpose(-1, -3)
         # print(output.shape)
         # raise
         left_term = output[:, :-1, ...]
@@ -97,8 +100,17 @@ def train(epoch):
         left_term = torch.reshape(left_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
         right_term = torch.reshape(right_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
 
+        # feature_prod = torch.matmul(right_term.transpose(2, 1), left_term)
+        # feature_prod = torch.reshape(feature_prod, [-1] + [feature_prod.shape[-2] * feature_prod.shape[-1]])
+        # feature_prod = torch.cat((feature_prod[..., None], feature_prod[..., None], feature_prod[..., None]), axis=-1)
         feature_prod = torch.matmul(left_term, right_term.transpose(2, 1))
-        #feature_prod = nn.Softmax(1)(feature_prod)
+        # print(left_term.shape)
+        # print(right_term.transpose(2, 1).shape)
+        # print(feature_prod.shape)
+        # feature_prod = nn.Softmax(1)(feature_prod)
+        label = label.transpose(-1, -2)
+        label = label.transpose(-1, -3)
+
         ref_colorGT = label[:, :3, ...]
         tar_colorGT = torch.cat((label[:, -1:, ...], label[:, -1:, ...], label[:, -1:, ...]), axis=1)
 
@@ -106,8 +118,8 @@ def train(epoch):
                                          + [ref_colorGT.shape[-1]])
         tar_colorGT_reshape = torch.reshape(tar_colorGT, [-1] + [tar_colorGT.shape[-3] * tar_colorGT.shape[-2]]
                                          + [tar_colorGT.shape[-1]])
-
-        pred_color = torch.matmul(ref_colorGT_reshape, feature_prod.transpose(2, 1))
+        # print(ref_colorGT_reshape.shape, feature_prod.transpose(2, 1).shape)
+        pred_color = ref_colorGT_reshape * feature_prod
         # pred_color = nn.Softmax(-1)(pred_color)
 
         colorPred = torch.reshape(pred_color, [-1] + [3]
@@ -115,10 +127,17 @@ def train(epoch):
         
         
         max_cls = torch.max(colorPred, 1)
-
-
+        # print(colorPred)
+        #print(colorPred.shape)
+        #print(label[:, 3, ...].shape)
         # print(colorPred[:, -1, ...].shape, label[:, 3, ...].shape)
-        loss = criterion(colorPred + 1e-9, (label[:, 3, ...] + 1e-9).long())
+        # print(colorPred.shape)
+        # print(tar_colorGT.shape)
+        # print(ref_colorGT_reshape.shape)
+        # print(feature_prod.shape)
+        # print(pred_color.shape)
+        # raise
+        loss = criterion(colorPred + 1e-9, tar_colorGT + 1e-9)
         
 
         #l1.append(criterion1.cpu())
@@ -186,6 +205,8 @@ def test(epoch):
             # output_4 = colornet(frame4)
             # output = torch.cat((output_1[:, None, ...], output_2[:, None, ...], output_3[:, None, ...], output_4[:, None, ...]), axis=1)
             output = colornet(frame1, frame2, frame3, frame4)
+            output = output.transpose(-1, -2)
+            output = output.transpose(-1, -3)
             # print(output.shape)
             # raise
             left_term = output[:, :-1, ...]
@@ -194,8 +215,13 @@ def test(epoch):
             left_term = torch.reshape(left_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
             right_term = torch.reshape(right_term, [-1] + [term_shape[2] * term_shape[3]] + [term_shape[-1]])
 
+            # feature_prod = torch.matmul(right_term.transpose(2, 1), left_term)
+            # feature_prod = torch.reshape(feature_prod, [-1] + [feature_prod.shape[-2] * feature_prod.shape[-1]])
+            # feature_prod = torch.cat((feature_prod[..., None], feature_prod[..., None], feature_prod[..., None]), axis=-1)
             feature_prod = torch.matmul(left_term, right_term.transpose(2, 1))
-            feature_prod = nn.Softmax(1)(feature_prod)
+            label = label.transpose(-1, -2)
+            label = label.transpose(-1, -3)
+
             ref_colorGT = label[:, :3, ...]
             tar_colorGT = torch.cat((label[:, -1:, ...], label[:, -1:, ...], label[:, -1:, ...]), axis=1)
 
@@ -204,18 +230,19 @@ def test(epoch):
             tar_colorGT_reshape = torch.reshape(tar_colorGT, [-1] + [tar_colorGT.shape[-3] * tar_colorGT.shape[-2]]
                                              + [tar_colorGT.shape[-1]])
 
-            pred_color = torch.matmul(ref_colorGT_reshape, feature_prod.transpose(2, 1))
-            pred_color = nn.Softmax(-1)(pred_color)
-
+            #pred_color = torch.matmul(ref_colorGT_reshape, feature_prod.transpose(2, 1))
+            # pred_color = nn.Softmax(-1)(pred_color)
+            pred_color = ref_colorGT_reshape * feature_prod
             colorPred = torch.reshape(pred_color, [-1] + [3]
                                          + list(label.shape)[2:])
             
-            
+            # print(colorPred.shape)
+            # print(label[:, 3, ...].shape)            
             max_cls = torch.max(colorPred, 1)
 
 
 
-            loss = criterion(colorPred + 1e-9, (label[:, 3, ...] + 1e-9).long())
+            loss = criterion(colorPred + 1e-9, tar_colorGT + 1e-9)
 
             #l1.append(criterion1.cpu())
             #ssim_loss.append(criterion2.detach().cpu())
@@ -280,7 +307,7 @@ best_loss = 1000
 # Save the configuration to the output directory
 configure(args.cv_dir+'/log', flush_secs=5)
 optimizer = optim.SGD(colornet.parameters(), lr=args.lr)
-criterion = nn.CrossEntropyLoss()
+criterion = nn.MSELoss()
 
 for epoch in range(start_epoch, start_epoch+args.max_epochs+1):
     print('Start training epoch {}'.format(epoch))

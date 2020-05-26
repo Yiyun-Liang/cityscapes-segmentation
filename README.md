@@ -3,15 +3,29 @@
 
 This repo explores different self-supervised pretext task for semantic segmentation on cityscapes dataset (original resolution 1024x2048).
 
+### Pretext Tasks
 Pretext tasks we are implementing(using 15,000 frames of video data from cityscapes dataset):
 
 * triplet loss on frame temporal location in `/triplet`
 * frame order prediction
 * video colorization
 
-For the target task of semantic segmentation, we evaluate a UNet and a Deeplabv3 model on the cityscapes dataset(5000 examples with fine annotations).
+### Target Tasks
+Our target tasks include semantic segmentation and future frame prediction.
 
-Experiments:
+* For the target task of semantic segmentation, we evaluate a UNet and a Deeplabv3 model on the cityscapes dataset(5000 examples with fine annotations).
+* For the task of future frame prediction, we evaluate an encoder-decoder temporal network on the cityscapes dataset.
+
+### Code Structure
+
+* `/unet`: code for running UNet for semantic segmentation (work based on [Pytorch-UNet](https://github.com/milesial/Pytorch-UNet))
+* `/DeepLabv3`: code for running DeepLabv3 for semantic segmentation (work based on [DeepLabv3.pytorch](https://github.com/chenxi116/DeepLabv3.pytorch))
+* `/triplet`: pretext task to generate embeddings for video frames using triplet loss (work based on [uzkent/MMVideoPredictor](https://github.com/uzkent/MMVideoPredictor))
+* `/spatioTemporal`: pretext task doing video frame order prediction (work based on [uzkent/MMVideoPredictor](https://github.com/uzkent/MMVideoPredictor))
+* `/colorization`: pretext task doing video frame colorization 
+* `/MMVideoPredictor`: future frame generation using custom temporal network (work based on [uzkent/MMVideoPredictor](https://github.com/uzkent/MMVideoPredictor))
+
+### Preliminary Experiments
 
 * UNet in `/unet` trained from scratch 
 * Deeplabv3 model in `/DeepLabv3` trained from scratch 

@@ -54,6 +54,10 @@ class ColorNet(nn.Module):
         out_2 = self.relu(self.embedding_net(x2))[:, :, None, :, :]
         out_3 = self.relu(self.embedding_net(x3))[:, :, None, :, :]
         out_4 = self.relu(self.embedding_net(x4))[:, :, None, :, :]
+        # print(x1.shape)
+        # print(out_1.shape)
+        # print(self.embedding_net(x1))
+        # raise
         out = torch.cat((out_1, out_2, out_3, out_4), axis=2)
         # out = out.reshape([-1, 4] + list(out.shape[1:]))
         # print(out.shape)
@@ -66,6 +70,8 @@ class ColorNet(nn.Module):
         out = self.relu(self.conv3d_4(out))
         out = self.relu(self.conv3d_5(out))
         out = out.transpose(2, 1)
+        #print(out.shape)
+        #raise
         return out
 
         
