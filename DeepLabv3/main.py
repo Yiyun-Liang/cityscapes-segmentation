@@ -55,6 +55,8 @@ parser.add_argument('--workers', type=int, default=4,
                     help='number of data loading workers')
 parser.add_argument('--custom', type=str, default=None,
                     help='path to custom ckpt')
+parser.add_argument('--ratio', action='store_true',
+                    help='use ratio loss')
 args = parser.parse_args()
 
 def get_miou(model, dataset, writer, epoch, split):
@@ -120,6 +122,7 @@ def main():
   global_step = 0
   if args.train:
     print('training')
+    print('using ratio loss {}'.format(args.ratio))
     criterion = nn.CrossEntropyLoss(ignore_index=255)
     ratio_criterion = RatioLoss()
 
@@ -177,9 +180,10 @@ def main():
         outputs = model(inputs)
         loss = criterion(outputs, target)
 
-        ratio_out = Variable(get_ratio(outputs).cuda())
-        ratio_target = Variable(get_ratio(target, target=True).cuda())
-        loss += ratio_criterion(ratio_out, ratio_target)
+        if args.ratio:
+          ratio_out = Variable(get_ratio(outputs).cuda())
+          ratio_target = Variable(get_ratio(target, target=True).cuda())
+          loss += ratio_criterion(ratio_out, ratio_target)
 
         if np.isnan(loss.item()) or np.isinf(loss.item()):
           pdb.set_trace()
