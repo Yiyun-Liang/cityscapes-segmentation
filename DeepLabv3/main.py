@@ -55,7 +55,7 @@ parser.add_argument('--custom', type=str, default=None,
                     help='path to custom ckpt')
 args = parser.parse_args()
 
-def get_miou(model, dataset, writer, global_step):
+def get_miou(model, dataset, writer, epoch, split):
   torch.cuda.set_device(args.gpu)
   model = model.cuda()
   model.eval()
@@ -76,8 +76,8 @@ def get_miou(model, dataset, writer, global_step):
       union_meter.update(union)
 
     iou = inter_meter.sum / (union_meter.sum + 1e-10)
-    print('Mean IoU: {0:.2f}'.format(iou.mean() * 100))
-    writer.add_scalar('miou', iou.mean(), global_step)
+    print('{0} Mean IoU: {1:.2f}'.format(split, iou.mean() * 100))
+    writer.add_scalar('miou/{0}'.format(split), iou.mean(), epoch)
 
 def main():
   assert torch.cuda.is_available()
@@ -88,10 +88,10 @@ def main():
     dataset = VOCSegmentation('data/VOCdevkit',
         train=args.train, crop_size=args.crop_size)
   elif args.dataset == 'cityscapes':
-    dataset = Cityscapes('/ssd',
+    dataset = Cityscapes('data/',
         train=args.train, crop_size=args.crop_size)
 
-    test_dataset = Cityscapes('/ssd',
+    test_dataset = Cityscapes('data/',
         train=False, crop_size=args.crop_size)
   else:
     raise ValueError('Unknown dataset: {}'.format(args.dataset))
@@ -176,7 +176,7 @@ def main():
           pdb.set_trace()
         losses.update(loss.item(), args.batch_size)
 
-        writer.add_scalar('Loss/train', loss.item(), global_step)
+        #writer.add_scalar('Loss/train', loss.item(), global_step)
         global_step += 1
 
         loss.backward()
@@ -189,16 +189,24 @@ def main():
               'loss: {loss.val:.4f} ({loss.ema:.4f})'.format(
               epoch + 1, i + 1, len(dataset_loader), lr, loss=losses))
 
+        epoch_loss.append(loss.cpu())
+
+      loss = torch.stack(epoch_loss).mean()
+      writer.add_scalar('Loss/train', loss.item(), epoch)
       writer.add_scalar('learning_rate0', optimizer.param_groups[0]['lr'], epoch)
       writer.add_scalar('learning_rate1', optimizer.param_groups[1]['lr'], epoch)
-      get_miou(model, test_dataset, writer, global_step)
+      get_miou(model, dataset, writer, epoch, 'train')
+      get_miou(model, test_dataset, writer, epoch, 'test')
 
+
+      '''
       if (epoch+1) % 10 == 0:
         torch.save({
           'epoch': epoch + 1,
           'state_dict': model.state_dict(),
           'optimizer': optimizer.state_dict(),
           }, model_fname % (epoch + 1))
+      '''
 
   else:
     print('testing')

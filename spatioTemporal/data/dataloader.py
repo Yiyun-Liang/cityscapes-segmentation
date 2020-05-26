@@ -56,13 +56,13 @@ class TemporalVideoDataset(Dataset):
         third_id = np.random.randint(low=start_frame+20, high=start_frame+28)
 
         # Open the images
-        first_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(first_id).zfill(6))
+        first_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(start_frame+8).zfill(6))
         first_img = Image.open(first_image_name)
 
-        second_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(second_id).zfill(6))
+        second_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(start_frame+10).zfill(6))
         second_img = Image.open(second_image_name)
 
-        last_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(third_id).zfill(6))
+        last_image_name = '{}/{}_{}_{}_leftImg8bit.png'.format(sequence_name, folder_name, str(seq_id).zfill(6), str(start_frame+12).zfill(6))
         last_img = Image.open(last_image_name)
 
         # Transform the images
@@ -79,7 +79,9 @@ class TemporalVideoDataset(Dataset):
         label_dict = {'012':0, '021':1, '102':2, '120':3, '201':4, '210':5}
         random.shuffle(img_list)
         label = str(pair[img_list[0]]) + str(pair[img_list[1]]) + str(pair[img_list[2]])
+        #print('1', label)
         img_list_label = label_dict[label]
+        #print('2', img_list_label)
         #img_list_label = pair[img_list[1]]
 
         return (img_list, img_list_label)
