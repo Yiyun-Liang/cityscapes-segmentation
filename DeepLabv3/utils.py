@@ -90,3 +90,38 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
 
   return image, mask
 
+def get_ratio(seg_map, ignore_class=255):
+  class_names = [
+    "road",
+    "sidewalk",
+    "building",
+    "wall",
+    "fence",
+    "pole",
+    "traffic_light",
+    "traffic_sign",
+    "vegetation",
+    "terrain",
+    "sky",
+    "person",
+    "rider",
+    "car",
+    "truck",
+    "bus",
+    "train",
+    "motorcycle",
+    "bicycle",
+  ]
+  num_classes = len(class_names)
+  train_id_map = dict(zip(np.arange(0,num_classes), class_names))
+
+  batch_size = seg_map.shape[0]
+  temp = seg_map.view(batch_size, -1).numpy()
+  l = [np.unique(arr[~(arr==ignore_class)], return_counts=True) for arr in temp]
+
+  arr = np.zeros((batch_size, num_classes))
+  for i in range(batch_size):
+    u, c = l[i]
+    arr[i, u.astype(int)] = c/c.sum()
+
+  return torch.from_numpy(arr)

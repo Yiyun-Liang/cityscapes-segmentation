@@ -13,8 +13,10 @@ from torchvision import transforms
 import deeplab
 from pascal import VOCSegmentation
 from cityscapes import Cityscapes
-from utils import AverageMeter, inter_and_union
+from utils import AverageMeter, inter_and_union, get_ratio
 from torch.utils.tensorboard import SummaryWriter
+
+from loss import RatioLoss
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train', action='store_true', default=False,
@@ -88,10 +90,10 @@ def main():
     dataset = VOCSegmentation('data/VOCdevkit',
         train=args.train, crop_size=args.crop_size)
   elif args.dataset == 'cityscapes':
-    dataset = Cityscapes('data/',
+    dataset = Cityscapes('/ssd',
         train=args.train, crop_size=args.crop_size)
 
-    test_dataset = Cityscapes('data/',
+    test_dataset = Cityscapes('/ssd',
         train=False, crop_size=args.crop_size)
   else:
     raise ValueError('Unknown dataset: {}'.format(args.dataset))
@@ -119,6 +121,8 @@ def main():
   if args.train:
     print('training')
     criterion = nn.CrossEntropyLoss(ignore_index=255)
+    ratio_criterion = RatioLoss()
+
     model = nn.DataParallel(model).cuda()
     model = model.cuda()
     model.train()
@@ -172,6 +176,11 @@ def main():
         target = Variable(target.cuda())
         outputs = model(inputs)
         loss = criterion(outputs, target)
+
+        ratio_out = Variable(get_ratio(outputs).cuda())
+        ratio_target = Variable(get_ratio(target).cuda())
+        loss += ratio_criterion(ratio_out, ratio_target)
+
         if np.isnan(loss.item()) or np.isinf(loss.item()):
           pdb.set_trace()
         losses.update(loss.item(), args.batch_size)
