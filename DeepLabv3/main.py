@@ -178,7 +178,7 @@ def main():
         loss = criterion(outputs, target)
 
         ratio_out = Variable(get_ratio(outputs).cuda())
-        ratio_target = Variable(get_ratio(target).cuda())
+        ratio_target = Variable(get_ratio(target, target=True).cuda())
         loss += ratio_criterion(ratio_out, ratio_target)
 
         if np.isnan(loss.item()) or np.isinf(loss.item()):

@@ -64,7 +64,6 @@ class Cityscapes(data.Dataset):
 
     if self.target_transform is not None:
       _target = self.target_transform(_target)
-
     return _img, _target
 
   def _get_files(self, data, dataset_split):

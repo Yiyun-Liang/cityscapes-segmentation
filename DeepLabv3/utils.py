@@ -87,10 +87,9 @@ def preprocess(image, mask, flip=False, scale=None, crop=None):
     j = random.randint(0, w - crop[1])
     image = image[:, i:i + crop[0], j:j + crop[1]]
     mask = mask[i:i + crop[0], j:j + crop[1]]
-
   return image, mask
 
-def get_ratio(seg_map, ignore_class=255):
+def get_ratio(seg_map, target=False, ignore_class=255):
   class_names = [
     "road",
     "sidewalk",
@@ -114,9 +113,14 @@ def get_ratio(seg_map, ignore_class=255):
   ]
   num_classes = len(class_names)
   train_id_map = dict(zip(np.arange(0,num_classes), class_names))
-
+  
   batch_size = seg_map.shape[0]
-  temp = seg_map.view(batch_size, -1).numpy()
+  #temp = seg_map.copy()
+  temp = seg_map
+  if not target:
+    temp = torch.argmax(seg_map, axis=1)
+  temp = temp.view(batch_size, -1).cpu().detach().numpy()
+  
   l = [np.unique(arr[~(arr==ignore_class)], return_counts=True) for arr in temp]
 
   arr = np.zeros((batch_size, num_classes))
