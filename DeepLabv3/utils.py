@@ -132,11 +132,16 @@ def get_ratio(seg_map, target=False, ignore_class=255):
 
 def get_moments(image):
   # calculate moments of binary image
+  image = image.astype(np.uint8)
   M = cv2.moments(image)
 
-  # calculate x,y coordinate of center
-  cX = int(M["m10"] / M["m00"])
-  cY = int(M["m01"] / M["m00"])
+  if M["m00"] != 0:
+    # calculate x,y coordinate of center
+    cX = float(int(M["m10"] / M["m00"]))
+    cY = float(int(M["m01"] / M["m00"]))
+  else:
+    cX = float(0)
+    cY = float(0)
 
   return cX, cY
 
@@ -167,23 +172,25 @@ def get_centroid(seg_map, target=False, ignore_class=255):
   train_id_map = dict(zip(np.arange(0,num_classes), class_names))
 
   batch_size = seg_map.shape[0]
+  image = seg_map
   if not target:
     image = torch.argmax(seg_map, axis=1)
-  image = seg_map.cpu().detach().numpy()
+  image = image.cpu().detach().numpy()
   # convert the grayscale image to binary image
   # ret,thresh = cv2.threshold(image,127,255,0)
 
   res = []
   for n in range(batch_size):
     moments = []
+    single = image[n]
     for i in range(0, num_classes):
-      cur = image.copy()
+      cur = single.copy()
       if i==0:
         cur[cur==i] = 100
         cur[cur!=100] = 0
       else:
         cur[cur!=i] = 0
-      cX, cY = get_moments(cur)
+      cX, cY = get_moments(np.array(cur))
       moments.append([cX, cY])
     res.append(moments)
 

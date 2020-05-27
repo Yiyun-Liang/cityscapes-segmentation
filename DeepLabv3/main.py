@@ -125,6 +125,7 @@ def main():
   if args.train:
     print('training')
     print('using ratio loss {}'.format(args.ratio))
+    print('using centroid loss {}'.format(args.centroid))
     criterion = nn.CrossEntropyLoss(ignore_index=255)
     ratio_criterion = RatioLoss()
     centroid_criterion = CentroidLoss()
