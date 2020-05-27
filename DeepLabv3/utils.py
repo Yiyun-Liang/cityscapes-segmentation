@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 from PIL import Image
-
+import cv2
 
 class AverageMeter(object):
   def __init__(self):
@@ -129,3 +129,73 @@ def get_ratio(seg_map, target=False, ignore_class=255):
     arr[i, u.astype(int)] = c/c.sum()
 
   return torch.from_numpy(arr)
+
+def get_moments(image):
+  # calculate moments of binary image
+  image = image.astype(np.uint8)
+  M = cv2.moments(image)
+
+  if M["m00"] != 0:
+    # calculate x,y coordinate of center
+    cX = float(int(M["m10"] / M["m00"]))
+    cY = float(int(M["m01"] / M["m00"]))
+  else:
+    cX = float(0)
+    cY = float(0)
+
+  return cX, cY
+
+# reference: https://www.learnopencv.com/find-center-of-blob-centroid-using-opencv-cpp-python/
+def get_centroid(seg_map, target=False, ignore_class=255):
+  class_names = [
+    "road",
+    "sidewalk",
+    "building",
+    "wall",
+    "fence",
+    "pole",
+    "traffic_light",
+    "traffic_sign",
+    "vegetation",
+    "terrain",
+    "sky",
+    "person",
+    "rider",
+    "car",
+    "truck",
+    "bus",
+    "train",
+    "motorcycle",
+    "bicycle",
+  ]
+  num_classes = len(class_names)
+  train_id_map = dict(zip(np.arange(0,num_classes), class_names))
+
+  batch_size = seg_map.shape[0]
+  image = seg_map
+  if not target:
+    image = torch.argmax(seg_map, axis=1)
+  image = image.cpu().detach().numpy()
+  # convert the grayscale image to binary image
+  # ret,thresh = cv2.threshold(image,127,255,0)
+
+  res = []
+  for n in range(batch_size):
+    moments = []
+    single = image[n]
+    for i in range(0, num_classes):
+      cur = single.copy()
+      if i==0:
+        cur[cur==i] = 100
+        cur[cur!=100] = 0
+      else:
+        cur[cur!=i] = 0
+      cX, cY = get_moments(np.array(cur))
+      moments.append([cX, cY])
+    res.append(moments)
+
+  res = np.array(res)
+  return torch.from_numpy(res)
+
+def get_adj_matrix(seg_map, target=False, ignore_class=255):
+  pass

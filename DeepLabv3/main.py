@@ -13,10 +13,10 @@ from torchvision import transforms
 import deeplab
 from pascal import VOCSegmentation
 from cityscapes import Cityscapes
-from utils import AverageMeter, inter_and_union, get_ratio
+from utils import AverageMeter, inter_and_union, get_ratio, get_centroid
 from torch.utils.tensorboard import SummaryWriter
 
-from loss import RatioLoss
+from loss import RatioLoss, CentroidLoss
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train', action='store_true', default=False,
@@ -57,6 +57,8 @@ parser.add_argument('--custom', type=str, default=None,
                     help='path to custom ckpt')
 parser.add_argument('--ratio', action='store_true',
                     help='use ratio loss')
+parser.add_argument('--centroid', action='store_true',
+                    help='use centroid loss')
 args = parser.parse_args()
 
 def get_miou(model, dataset, writer, epoch, split):
@@ -123,8 +125,10 @@ def main():
   if args.train:
     print('training')
     print('using ratio loss {}'.format(args.ratio))
+    print('using centroid loss {}'.format(args.centroid))
     criterion = nn.CrossEntropyLoss(ignore_index=255)
     ratio_criterion = RatioLoss()
+    centroid_criterion = CentroidLoss()
 
     model = nn.DataParallel(model).cuda()
     model = model.cuda()
@@ -184,6 +188,10 @@ def main():
           ratio_out = Variable(get_ratio(outputs).cuda())
           ratio_target = Variable(get_ratio(target, target=True).cuda())
           loss += ratio_criterion(ratio_out, ratio_target)
+        if args.centroid:
+          c_out = Variable(get_centroid(outputs).cuda())
+          c_target = Variable(get_centroid(target, target=True).cuda())
+          loss += centroid_criterion(c_out, c_target)
 
         if np.isnan(loss.item()) or np.isinf(loss.item()):
           pdb.set_trace()
