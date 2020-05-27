@@ -92,10 +92,10 @@ def main():
     dataset = VOCSegmentation('data/VOCdevkit',
         train=args.train, crop_size=args.crop_size)
   elif args.dataset == 'cityscapes':
-    dataset = Cityscapes('/ssd',
+    dataset = Cityscapes('data/',
         train=args.train, crop_size=args.crop_size)
 
-    test_dataset = Cityscapes('/ssd',
+    test_dataset = Cityscapes('data/',
         train=False, crop_size=args.crop_size)
   else:
     raise ValueError('Unknown dataset: {}'.format(args.dataset))
