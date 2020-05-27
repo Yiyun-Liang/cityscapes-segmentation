@@ -12,3 +12,10 @@ class RatioLoss(nn.Module):
 
     def forward(self, input, target):
         return torch.mean(torch.abs(input - target))
+
+class CentroidLoss(nn.Module):
+    def __init__(self):
+        super(CentroidLoss, self).__init__()
+
+    def forward(self, input, target):
+        return torch.mean(torch.abs(input - target))
