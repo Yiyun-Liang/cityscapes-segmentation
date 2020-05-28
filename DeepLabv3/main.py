@@ -255,9 +255,9 @@ def main():
           'optimizer': optimizer.state_dict(),
           }, model_fname % (epoch + 1))
       
-    print('Best Train Mean IoU: {1:.2f}'.format(best_train_miou))
-    print('Best Test Mean IoU: {1:.2f}'.format(best_test_miou))
-    print('Best Train Loss: {1:.2f}'.format(best_train_loss))
+    print('Best Train Mean IoU: {0:.2f}'.format(best_train_miou))
+    print('Best Test Mean IoU: {0:.2f}'.format(best_test_miou))
+    print('Best Train Loss: {0:.2f}'.format(best_train_loss))
 
   else:
     print('testing')
