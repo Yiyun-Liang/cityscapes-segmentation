@@ -175,7 +175,7 @@ def get_centroid(seg_map, target=False, ignore_class=255):
   image = seg_map
   if not target:
     image = torch.argmax(seg_map, axis=1)
-  image = image.cpu().detach().numpy()
+  image = image #.cpu().detach().numpy()
   # convert the grayscale image to binary image
   # ret,thresh = cv2.threshold(image,127,255,0)
 
