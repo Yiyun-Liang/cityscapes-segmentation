@@ -55,6 +55,8 @@ parser.add_argument('--workers', type=int, default=4,
                     help='number of data loading workers')
 parser.add_argument('--custom', type=str, default=None,
                     help='path to custom ckpt')
+parser.add_argument('--crossentropy', action='store_true',
+                    help='use crossentropy loss')
 parser.add_argument('--ratio', action='store_true',
                     help='use ratio loss')
 parser.add_argument('--centroid', action='store_true',
@@ -96,10 +98,14 @@ def main():
   assert torch.cuda.is_available()
   torch.backends.cudnn.benchmark = True
   path = 'ckpt'
+  subpath = ''
+
+  if args.crossentropy:
+    subpath = ''.join([subpath, 'crossentropy_'])
   if args.ratio:
-    subpath = 'ratio'
+    subpath = ''.join([subpath, 'ratio_'])
   if args.centroid:
-    subpath = '_'.join([subpath, 'centroid'])
+    subpath = ''.join([subpath, 'centroid_'])
 
   path = os.path.join(path, subpath, str(args.base_lr))
   if not os.path.exists(path):
@@ -144,6 +150,7 @@ def main():
   global_step = 0
   if args.train:
     print('training')
+    print('using crossentropy loss {}'.format(args.crossentropy))
     print('using ratio loss {}'.format(args.ratio))
     print('using centroid loss {}'.format(args.centroid))
     criterion = nn.CrossEntropyLoss(ignore_index=255)
@@ -202,12 +209,17 @@ def main():
         inputs = Variable(inputs.cuda())
         target = Variable(target.cuda())
         outputs = model(inputs)
+
         loss = criterion(outputs, target)
 
         if args.ratio:
           ratio_out = Variable(get_ratio(outputs).cuda())
           ratio_target = Variable(get_ratio(target, target=True).cuda())
-          loss += ratio_criterion(ratio_out, ratio_target)
+          if not args.crossentropy:
+            loss = ratio_criterion(ratio_out, ratio_target)
+          else:
+            loss += ratio_criterion(ratio_out, ratio_target)
+
         if args.centroid:
           c_out = Variable(get_centroid(outputs).cuda())
           c_target = Variable(get_centroid(target, target=True).cuda())

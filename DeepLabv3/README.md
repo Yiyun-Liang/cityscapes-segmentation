@@ -1,10 +1,14 @@
 # DeepLabv3.pytorch
 
-Train with ImageNet pretrained model `python main.py --train --dataset cityscapes --exp lr1e-3_crop769_batch20_lastmult10_im --epochs 200 --base_lr 0.001 --crop_size 769 --batch_size 5 --last_mult 10`
+Train with ImageNet pretrained model `python main.py --train --dataset cityscapes --exp lr1e-3_crop769_batch5_lastmult10_im --epochs 200 --base_lr 0.001 --crop_size 769 --batch_size 5 --last_mult 10`
 
-Train from scratch `python main.py --train --dataset cityscapes --exp lr1e-3_crop769_batch20_lastmult1_scratch --epochs 200 --base_lr 0.001 --crop_size 769 --batch_size 5 --last_mult 1 --scratch`
+Train with im pretrained & crossEntropy loss `python main.py --train --dataset cityscapes --exp lr1e-3_crop769_batch5_lastmult10_im --epochs 200 --base_lr 0.001--crop_size 769 --batch_size 5 --last_mult 10 --crossentropy` Add ratio loss `--ratio` Add centroid loss `--centroid`
 
-Train from custom pretext pretrained model `python main.py --train --dataset cityscapes --exp lr1e-2_crop769_batch20_lastmult10_scratch --epochs 200 --base_lr 0.001 --crop_size 769 --batch_size 5 --last_mult 10 --custom ../triplet/cv/tmp/ckpt_E_50.pth`
+
+
+Train from scratch `python main.py --train --dataset cityscapes --exp lr1e-3_crop769_batch5_lastmult1_scratch --epochs 200 --base_lr 0.001 --crop_size 769 --batch_size 5 --last_mult 1 --scratch`
+
+Train from custom pretext pretrained model `python main.py --train --dataset cityscapes --exp lr1e-3_crop769_batch5_lastmult10_pretrained --epochs 200 --base_lr 0.001 --crop_size 769 --batch_size 5 --last_mult 10 --custom ../triplet/cv/tmp/ckpt_E_50.pth`
 
 Test with `python main.py --dataset cityscapes --epochs 100 --crop_size 769 --exp lr1e-2_crop769_batch20_lastmult10_scratch`
 
