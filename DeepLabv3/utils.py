@@ -126,8 +126,8 @@ def get_ratio(seg_map, target=False, ignore_class=255):
   arr = np.zeros((batch_size, num_classes))
   for i in range(batch_size):
     u, c = l[i]
-    arr[i, u.astype(int)] = c/c.sum()
-
+    u, c = u.cpu(), c.cpu()
+    arr[i, u] = torch.true_divide(c,c.sum())
   return torch.from_numpy(arr)
 
 def get_moments(image):
