@@ -61,6 +61,10 @@ parser.add_argument('--centroid', action='store_true',
                     help='use centroid loss')
 args = parser.parse_args()
 
+best_train_loss = 1000
+best_train_miou = 0
+best_test_miou = 0
+
 def get_miou(model, dataset, writer, epoch, split):
   torch.cuda.set_device(args.gpu)
   model = model.cuda()
@@ -84,12 +88,27 @@ def get_miou(model, dataset, writer, epoch, split):
     iou = inter_meter.sum / (union_meter.sum + 1e-10)
     print('{0} Mean IoU: {1:.2f}'.format(split, iou.mean() * 100))
     writer.add_scalar('miou/{0}'.format(split), iou.mean(), epoch)
+    return iou.mean() * 100
 
 def main():
+  global best_train_loss, best_train_miou, best_test_miou
+
   assert torch.cuda.is_available()
   torch.backends.cudnn.benchmark = True
-  model_fname = '/ssd/deeplabv3/deeplab_{0}_{1}_v3_{2}_epoch%d.pth'.format(
-      args.backbone, args.dataset, args.exp)
+  path = 'ckpt'
+  if args.ratio:
+    subpath = 'ratio'
+  if args.centroid:
+    subpath = '_'.join([subpath, 'centroid'])
+
+  path = os.path.join(path, subpath, str(args.base_lr))
+  if not os.path.exists(path):
+    os.makedirs(path)
+  model_fname = '{0}/deeplab_{1}_{2}_v3_{3}_epoch%d.pth'.format(
+      path, args.backbone, args.dataset, args.exp)
+  best_fname = '{0}/deeplab_{1}_{2}_v3_{3}_best.pth'.format(
+      path, args.backbone, args.dataset, args.exp)
+
   if args.dataset == 'pascal':
     dataset = VOCSegmentation('data/VOCdevkit',
         train=args.train, crop_size=args.crop_size)
@@ -101,6 +120,7 @@ def main():
         train=False, crop_size=args.crop_size)
   else:
     raise ValueError('Unknown dataset: {}'.format(args.dataset))
+
   if args.backbone == 'resnet101':
     model = getattr(deeplab, 'resnet101')(
         pretrained=(not args.scratch),
@@ -216,18 +236,28 @@ def main():
       writer.add_scalar('Loss/train', loss.item(), epoch)
       writer.add_scalar('learning_rate0', optimizer.param_groups[0]['lr'], epoch)
       writer.add_scalar('learning_rate1', optimizer.param_groups[1]['lr'], epoch)
-      get_miou(model, dataset, writer, epoch, 'train')
-      get_miou(model, test_dataset, writer, epoch, 'test')
+      train_iou = get_miou(model, dataset, writer, epoch, 'train')
+      test_iou = get_miou(model, test_dataset, writer, epoch, 'test')
+      if test_iou > best_test_miou:
+        best_test_miou = test_iou
+        best_train_miou = train_iou
+        best_train_loss = loss.item()
+        torch.save({
+          'epoch': epoch + 1,
+          'state_dict': model.state_dict(),
+          'optimizer': optimizer.state_dict(),
+          }, best_fname)
 
-
-      '''
       if (epoch+1) % 10 == 0:
         torch.save({
           'epoch': epoch + 1,
           'state_dict': model.state_dict(),
           'optimizer': optimizer.state_dict(),
           }, model_fname % (epoch + 1))
-      '''
+      
+    print('Best Train Mean IoU: {1:.2f}'.format(best_train_miou))
+    print('Best Test Mean IoU: {1:.2f}'.format(best_test_miou))
+    print('Best Train Loss: {1:.2f}'.format(best_train_loss))
 
   else:
     print('testing')
