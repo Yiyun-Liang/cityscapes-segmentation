@@ -119,9 +119,9 @@ def get_ratio(seg_map, target=False, ignore_class=255):
   temp = seg_map
   if not target:
     temp = torch.argmax(seg_map, axis=1)
-  temp = temp.view(batch_size, -1).cpu().detach().numpy()
+  temp = temp.view(batch_size, -1) #.cpu().detach().numpy()
   
-  l = [np.unique(arr[~(arr==ignore_class)], return_counts=True) for arr in temp]
+  l = [torch.unique(arr[~(arr==ignore_class)], return_counts=True) for arr in temp]
 
   arr = np.zeros((batch_size, num_classes))
   for i in range(batch_size):
