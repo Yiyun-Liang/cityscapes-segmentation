@@ -27,6 +27,7 @@ from models import PredictorNet
 from utils import utils
 from pytorch_msssim import ssim
 from torch.utils.tensorboard import SummaryWriter
+import torchvision.models as torch_models
 
 import argparse
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
@@ -173,7 +174,7 @@ trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames
 trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 testloader = torchdata.DataLoader(testset, batch_size=int(args.batch_size/2), shuffle=False, num_workers=args.num_workers)
 # rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3)
-resnet = models.resnet50(pretrained=False)
+resnet = torch_models.resnet50(pretrained=False)
 resnet = nn.Sequential(*list(resnet.children())[:-2]).to(device)
 rnet = PredictorNet.SpatioTemporalNet(3, 3, resnet)
 
