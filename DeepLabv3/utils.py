@@ -130,22 +130,27 @@ def get_ratio(seg_map, target=False, ignore_class=255):
 def get_moments(image, clas=None):
   # calculate moments of binary image
   H, W = image.shape
-  
   center = torch.zeros(2)
+  r = torch.arange(0, W)
+  pixel_mat_x = r.expand(H, W)
+  pixel_mat_y = pixel_mat_x.clone()
+  pixel_mat_y = pixel_mat_y.permute(1, 0)
   if clas is None:
-    for i in range(H):
-      for j in range(W):
-        center[0] += i*image[j][i]
-        center[1] += j*image[j][i]
+    center[0] = torch.sum(pixel_mat_x * image)
+    center[1] = torch.sum(pixel_mat_y * image)
   else:
-    for i in range(H):
-      for j in range(W):
-        if image[i][j] == clas:
-          center[0] += j
-          center[1] += i
+    if clas == 0:
+      image[image==clas] = 100
+    image[image!=clas] = 0.0
+    if clas == 0:
+      image[image==100] = 1.0
+    else:
+      image[image==clas] = 1.0
+    center[0] = torch.sum(pixel_mat_x * image)
+    center[1] = torch.sum(pixel_mat_y * image)
+
   # normalize
   center /= H*W
-    
   return center
 
 # reference: https://www.learnopencv.com/find-center-of-blob-centroid-using-opencv-cpp-python/
@@ -183,8 +188,7 @@ def get_centroid(seg_map, target=False, ignore_class=255):
       moments = torch.zeros((num_classes, 2))
       for i in range(num_classes):
         cur = arr[n][i].clone()
-        cur[cur < 0.5] = 0
-        c = get_moments(cur)
+        c = get_moments(cur.cpu())
         moments[i] = c
       res[n] = moments
   else: 
@@ -194,10 +198,9 @@ def get_centroid(seg_map, target=False, ignore_class=255):
       single = arr[n]
       for i in range(num_classes):
         cur = single.clone()
-        c = get_moments(cur, clas=i)
+        c = get_moments(cur.cpu(), clas=i)
         moments[i] = c
       res[n] = moments
-  print(res)
   return res
 
 def get_adj_matrix(seg_map, target=False, ignore_class=255):
