@@ -116,22 +116,16 @@ def get_ratio(seg_map, target=False, ignore_class=255):
   train_id_map = dict(zip(np.arange(0,num_classes), class_names))
   
   batch_size = seg_map.shape[0]
-  temp = seg_map
   if not target:
-    temp = F.softmax(temp, dim=1)
-    temp = torch.sum(temp, dim=(2,3))/(temp.shape[2]*temp.shape[3])
-    print(temp)
-    return temp
+    arr = F.softmax(seg_map, dim=1)
+    arr = torch.sum(arr, dim=(2,3))/(seg_map.shape[2]*seg_map.shape[3])
   else:
-    temp = temp.view(batch_size, -1)
-    l = [torch.unique(arr[~(arr==ignore_class)], return_counts=True) for arr in temp]
-    arr = np.zeros((batch_size, num_classes))
-    for i in range(batch_size):
-      u, c = l[i]
-      u, c = u.cpu(), c.cpu()
-      arr[i, u] = torch.true_divide(c,c.sum())
-    print(torch.from_numpy(arr))
-    return torch.from_numpy(arr)
+    arr = torch.zeros((batch_size, num_classes))
+    for cl in range(num_classes):
+      for bs in range(batch_size):
+        arr[bs, cl] = torch.sum(seg_map[bs, :, :] == cl)/(seg_map.shape[1]*seg_map.shape[2])
+  print(arr)
+  return arr
 
 def get_moments(image):
   # calculate moments of binary image
