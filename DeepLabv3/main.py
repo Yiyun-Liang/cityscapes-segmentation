@@ -220,7 +220,7 @@ def main():
             loss = ratio_criterion(ratio_out, ratio_target)
           else:
             loss += ratio_criterion(ratio_out, ratio_target)
-
+        
         if args.centroid:
           c_out = Variable(get_centroid(outputs).cuda())
           c_target = Variable(get_centroid(target, target=True).cuda())
