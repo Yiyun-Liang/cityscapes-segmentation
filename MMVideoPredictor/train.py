@@ -174,6 +174,7 @@ trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames
 trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 testloader = torchdata.DataLoader(testset, batch_size=int(args.batch_size/2), shuffle=False, num_workers=args.num_workers)
 # rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3)
+device = torch.device("cuda")
 resnet = torch_models.resnet50(pretrained=False)
 resnet = nn.Sequential(*list(resnet.children())[:-2]).to(device)
 rnet = PredictorNet.SpatioTemporalNet(3, 3, resnet)
@@ -188,7 +189,6 @@ c = torch.cuda.device_count()
 print('Number of GPUs:', c)
 # if c > 1:
 #     rnet = nn.DataParallel(rnet, device_ids=[0, 1, 2, 3])
-device = torch.device("cuda")
 rnet.to(device)
 
 # Save the configuration to the output directory
