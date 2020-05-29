@@ -3,6 +3,7 @@ import random
 import numpy as np
 import torch
 import torchvision.transforms as transforms
+from torch.nn import functional as F
 from PIL import Image
 import cv2
 
@@ -115,35 +116,42 @@ def get_ratio(seg_map, target=False, ignore_class=255):
   train_id_map = dict(zip(np.arange(0,num_classes), class_names))
   
   batch_size = seg_map.shape[0]
-  #temp = seg_map.copy()
-  temp = seg_map
   if not target:
-    temp = torch.argmax(seg_map, axis=1)
-  temp = temp.view(batch_size, -1) #.cpu().detach().numpy()
-  
-  l = [torch.unique(arr[~(arr==ignore_class)], return_counts=True) for arr in temp]
-
-  arr = np.zeros((batch_size, num_classes))
-  for i in range(batch_size):
-    u, c = l[i]
-    u, c = u.cpu(), c.cpu()
-    arr[i, u] = torch.true_divide(c,c.sum())
-  return torch.from_numpy(arr)
-
-def get_moments(image):
-  # calculate moments of binary image
-  image = image.astype(np.uint8)
-  M = cv2.moments(image)
-
-  if M["m00"] != 0:
-    # calculate x,y coordinate of center
-    cX = float(int(M["m10"] / M["m00"]))
-    cY = float(int(M["m01"] / M["m00"]))
+    arr = F.softmax(seg_map, dim=1)
+    arr = torch.sum(arr, dim=(2,3))/(seg_map.shape[2]*seg_map.shape[3])
   else:
-    cX = float(0)
-    cY = float(0)
+    arr = torch.zeros((batch_size, num_classes))
+    for cl in range(num_classes):
+      for bs in range(batch_size):
+        arr[bs, cl] = torch.true_divide(torch.sum(seg_map[bs, :, :] == cl), (seg_map.shape[1]*seg_map.shape[2]))
+        #print(cl, torch.sum(seg_map[bs, :, :] == cl))
+  return arr
 
-  return cX, cY
+def get_moments(image, clas=None):
+  # calculate moments of binary image
+  H, W = image.shape
+  center = torch.zeros(2)
+  r = torch.arange(0, W)
+  pixel_mat_x = r.expand(H, W)
+  pixel_mat_y = pixel_mat_x.clone()
+  pixel_mat_y = pixel_mat_y.permute(1, 0)
+  if clas is None:
+    center[0] = torch.sum(pixel_mat_x * image)
+    center[1] = torch.sum(pixel_mat_y * image)
+  else:
+    if clas == 0:
+      image[image==clas] = 100
+    image[image!=clas] = 0.0
+    if clas == 0:
+      image[image==100] = 1.0
+    else:
+      image[image==clas] = 1.0
+    center[0] = torch.sum(pixel_mat_x * image)
+    center[1] = torch.sum(pixel_mat_y * image)
+
+  # normalize
+  center /= H*W
+  return center
 
 # reference: https://www.learnopencv.com/find-center-of-blob-centroid-using-opencv-cpp-python/
 def get_centroid(seg_map, target=False, ignore_class=255):
@@ -172,30 +180,28 @@ def get_centroid(seg_map, target=False, ignore_class=255):
   train_id_map = dict(zip(np.arange(0,num_classes), class_names))
 
   batch_size = seg_map.shape[0]
-  image = seg_map
+  arr = seg_map
   if not target:
-    image = torch.argmax(seg_map, axis=1)
-  image = image #.cpu().detach().numpy()
-  # convert the grayscale image to binary image
-  # ret,thresh = cv2.threshold(image,127,255,0)
-
-  res = []
-  for n in range(batch_size):
-    moments = []
-    single = image[n]
-    for i in range(0, num_classes):
-      cur = single.copy()
-      if i==0:
-        cur[cur==i] = 100
-        cur[cur!=100] = 0
-      else:
-        cur[cur!=i] = 0
-      cX, cY = get_moments(np.array(cur))
-      moments.append([cX, cY])
-    res.append(moments)
-
-  res = np.array(res)
-  return torch.from_numpy(res)
+    res = torch.zeros((batch_size, num_classes, 2))
+    arr = F.softmax(seg_map, dim=1)
+    for n in range(batch_size):
+      moments = torch.zeros((num_classes, 2))
+      for i in range(num_classes):
+        cur = arr[n][i].clone()
+        c = get_moments(cur.cpu())
+        moments[i] = c
+      res[n] = moments
+  else: 
+    res = torch.zeros((batch_size, num_classes, 2))
+    for n in range(batch_size):
+      moments = torch.zeros((num_classes, 2))
+      single = arr[n]
+      for i in range(num_classes):
+        cur = single.clone()
+        c = get_moments(cur.cpu(), clas=i)
+        moments[i] = c
+      res[n] = moments
+  return res
 
 def get_adj_matrix(seg_map, target=False, ignore_class=255):
   pass

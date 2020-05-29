@@ -210,20 +210,24 @@ def main():
         target = Variable(target.cuda())
         outputs = model(inputs)
 
-        loss = criterion(outputs, target)
+        if args.crossentropy: 
+          loss = criterion(outputs, target)
 
         if args.ratio:
-          ratio_out = Variable(get_ratio(outputs).cuda(),requires_grad=True)
-          ratio_target = Variable(get_ratio(target, target=True).cuda(),requires_grad=True)
+          ratio_out = get_ratio(outputs).cuda()
+          ratio_target = get_ratio(target, target=True).cuda()
           if not args.crossentropy:
             loss = ratio_criterion(ratio_out, ratio_target)
           else:
             loss += ratio_criterion(ratio_out, ratio_target)
-
+        
         if args.centroid:
-          c_out = Variable(get_centroid(outputs).cuda(), requires_grad=True)
-          c_target = Variable(get_centroid(target, target=True).cuda(), requires_grad=True)
-          loss += centroid_criterion(c_out, c_target)
+          c_out = get_centroid(outputs).cuda()
+          c_target = get_centroid(target, target=True).cuda()
+          if not args.crossentropy and not args.ratio:
+            loss = centroid_criterion(c_out, c_target)
+          else:
+            loss += centroid_criterion(c_out, c_target)
 
         if np.isnan(loss.item()) or np.isinf(loss.item()):
           pdb.set_trace()
