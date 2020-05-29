@@ -72,7 +72,7 @@ def save_images(outputs, batch_idx, out_dir):
 
 def get_dataset(train_dir,  test_dir, frames, embeddings):
     transform_train, transform_test, transform_train_emb, transform_test_emb = get_transforms()
-    trainset = CityscapesVideos(train_dir, transform_train, frames, transform_train_emb, embeddings)
-    testset = CityscapesVideos(test_dir, transform_test, frames, transform_test_emb, frames, embeddings)
+    trainset = CityscapesVideos(train_dir, transform_train, frames, transform_train_emb, embeddings, 10)
+    testset = CityscapesVideos(test_dir, transform_test, frames, transform_test_emb, embeddings, 2)
 
     return trainset, testset
