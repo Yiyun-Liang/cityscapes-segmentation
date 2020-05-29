@@ -3,6 +3,7 @@ import random
 import numpy as np
 import torch
 import torchvision.transforms as transforms
+from torch.nn import functional as F
 from PIL import Image
 import cv2
 
@@ -114,20 +115,21 @@ def get_ratio(seg_map, target=False, ignore_class=255):
   num_classes = len(class_names)
   train_id_map = dict(zip(np.arange(0,num_classes), class_names))
   
-  batch_size = seg_map.shape[0]
-  #temp = seg_map.copy()
+  batch_size, _, H, W = seg_map.shape
   temp = seg_map
   if not target:
-    temp = torch.argmax(seg_map, axis=1)
-  temp = temp.view(batch_size, -1) #.cpu().detach().numpy()
-  
-  l = [torch.unique(arr[~(arr==ignore_class)], return_counts=True) for arr in temp]
+    temp = F.softmax(temp)
+    temp = torch.sum(temp, dim=(2,3))/(H*W)
+    arr = temp
+  else:
+    temp = temp.view(batch_size, -1)
+    l = [torch.unique(arr[~(arr==ignore_class)], return_counts=True) for arr in temp]
+    arr = np.zeros((batch_size, num_classes))
+    for i in range(batch_size):
+      u, c = l[i]
+      u, c = u.cpu(), c.cpu()
+      arr[i, u] = torch.true_divide(c,c.sum())
 
-  arr = np.zeros((batch_size, num_classes))
-  for i in range(batch_size):
-    u, c = l[i]
-    u, c = u.cpu(), c.cpu()
-    arr[i, u] = torch.true_divide(c,c.sum())
   return torch.from_numpy(arr)
 
 def get_moments(image):
@@ -175,7 +177,7 @@ def get_centroid(seg_map, target=False, ignore_class=255):
   image = seg_map
   if not target:
     image = torch.argmax(seg_map, axis=1)
-  image = image #.cpu().detach().numpy()
+  image = image.cpu().detach().numpy()
   # convert the grayscale image to binary image
   # ret,thresh = cv2.threshold(image,127,255,0)
 
