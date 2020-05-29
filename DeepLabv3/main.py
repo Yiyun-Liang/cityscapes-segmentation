@@ -214,8 +214,8 @@ def main():
           loss = criterion(outputs, target)
 
         if args.ratio:
-          ratio_out = Variable(get_ratio(outputs).cuda())
-          ratio_target = Variable(get_ratio(target, target=True).cuda())
+          ratio_out = get_ratio(outputs).cuda()
+          ratio_target = get_ratio(target, target=True).cuda()
           if not args.crossentropy:
             loss = ratio_criterion(ratio_out, ratio_target)
           else:

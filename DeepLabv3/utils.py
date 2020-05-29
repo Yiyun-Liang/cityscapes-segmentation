@@ -123,8 +123,8 @@ def get_ratio(seg_map, target=False, ignore_class=255):
     arr = torch.zeros((batch_size, num_classes))
     for cl in range(num_classes):
       for bs in range(batch_size):
-        arr[bs, cl] = torch.sum(seg_map[bs, :, :] == cl)/(seg_map.shape[1]*seg_map.shape[2])
-  print(arr)
+        arr[bs, cl] = torch.true_divide(torch.sum(seg_map[bs, :, :] == cl), (seg_map.shape[1]*seg_map.shape[2]))
+        #print(cl, torch.sum(seg_map[bs, :, :] == cl))
   return arr
 
 def get_moments(image):
