@@ -127,20 +127,26 @@ def get_ratio(seg_map, target=False, ignore_class=255):
         #print(cl, torch.sum(seg_map[bs, :, :] == cl))
   return arr
 
-def get_moments(image):
+def get_moments(image, clas=None):
   # calculate moments of binary image
-  image = image.astype(np.uint8)
-  M = cv2.moments(image)
-
-  if M["m00"] != 0:
-    # calculate x,y coordinate of center
-    cX = float(int(M["m10"] / M["m00"]))
-    cY = float(int(M["m01"] / M["m00"]))
+  H, W = image.shape
+  
+  center = torch.zeros(2)
+  if clas is None:
+    for i in range(H):
+      for j in range(W):
+        center[0] += i*image[j][i]
+        center[1] += j*image[j][i]
   else:
-    cX = float(0)
-    cY = float(0)
-
-  return cX, cY
+    for i in range(H):
+      for j in range(W):
+        if image[i][j] == clas:
+          center[0] += j
+          center[1] += i
+  # normalize
+  center /= H*W
+    
+  return center
 
 # reference: https://www.learnopencv.com/find-center-of-blob-centroid-using-opencv-cpp-python/
 def get_centroid(seg_map, target=False, ignore_class=255):
@@ -169,30 +175,30 @@ def get_centroid(seg_map, target=False, ignore_class=255):
   train_id_map = dict(zip(np.arange(0,num_classes), class_names))
 
   batch_size = seg_map.shape[0]
-  image = seg_map
+  arr = seg_map
   if not target:
-    image = torch.argmax(seg_map, axis=1)
-  image = image.cpu().detach().numpy()
-  # convert the grayscale image to binary image
-  # ret,thresh = cv2.threshold(image,127,255,0)
-
-  res = []
-  for n in range(batch_size):
-    moments = []
-    single = image[n]
-    for i in range(0, num_classes):
-      cur = single.copy()
-      if i==0:
-        cur[cur==i] = 100
-        cur[cur!=100] = 0
-      else:
-        cur[cur!=i] = 0
-      cX, cY = get_moments(np.array(cur))
-      moments.append([cX, cY])
-    res.append(moments)
-
-  res = np.array(res)
-  return torch.from_numpy(res)
+    res = torch.zeros((batch_size, num_classes, 2))
+    arr = F.softmax(seg_map, dim=1)
+    for n in range(batch_size):
+      moments = torch.zeros((num_classes, 2))
+      for i in range(num_classes):
+        cur = arr[n][i].clone()
+        cur[cur < 0.5] = 0
+        c = get_moments(cur)
+        moments[i] = c
+      res[n] = moments
+  else: 
+    res = torch.zeros((batch_size, num_classes, 2))
+    for n in range(batch_size):
+      moments = torch.zeros((num_classes, 2))
+      single = arr[n]
+      for i in range(num_classes):
+        cur = single.clone()
+        c = get_moments(cur, clas=i)
+        moments[i] = c
+      res[n] = moments
+  print(res)
+  return res
 
 def get_adj_matrix(seg_map, target=False, ignore_class=255):
   pass
