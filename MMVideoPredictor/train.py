@@ -34,7 +34,7 @@ parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
 parser.add_argument('--data_dir', default='data/', help= 'data directory')
 parser.add_argument('--train_dir', default='data/', help='training data directory')
 parser.add_argument('--test_dir', default='data/', help='test data directory')
-parser.add_argument('--frames', nargs='+', help='Frames to use as input and output', required=True)
+parser.add_argument('--frames', nargs='+', help='Frames to use as input and output')
 parser.add_argument('--cv_dir', default='cv/tmp/', help='checkpoint directory (models and logs are saved here)')
 parser.add_argument('--ckpt_dir', help='checkpoint directory (models and logs are saved here)')
 parser.add_argument('--batch_size', type=int, default=256, help='batch size')
@@ -81,7 +81,7 @@ def train(epoch):
 
         preds = torch.tanh(rnet.forward(input_img))
 
-        
+
 
         criterion1 = torch.mean(torch.abs(preds - targets))
         criterion2 = ssim(preds, targets, data_range=targets.max()-targets.min())
