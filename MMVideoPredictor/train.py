@@ -81,6 +81,8 @@ def train(epoch):
         # preds = torch.tanh(rnet.forward(images, emb, args.embeddings))
 
         preds = torch.tanh(rnet.forward(input_img))
+        preds = preds.reshape(-1, preds.shape[2], preds.shape[3], preds.shape[4])
+        targets = targets.reshape(-1, targets.shape[2], targets.shape[3], targets.shape[4])
 
 
 
@@ -139,6 +141,8 @@ def test(epoch):
             targets = targets.cuda()
 
         preds = torch.tanh(rnet.forward(input_img))
+        preds = preds.reshape(-1, preds.shape[2], preds.shape[3], preds.shape[4])
+        targets = targets.reshape(-1, targets.shape[2], targets.shape[3], targets.shape[4])
 
         criterion1 = torch.mean(torch.abs(preds - targets))
         criterion2 = ssim(preds, targets, val_range=targets.max()-targets.min())
