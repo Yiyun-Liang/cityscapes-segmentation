@@ -84,18 +84,18 @@ class SpatioTemporalNet(nn.Module):
         # Decoder Layers
         self.dconv1_2D = base.deconv3x3(self.feature_maps_size[3], self.feature_maps_size[2], self.strides[0])
         self.bn5_2D = nn.BatchNorm2d(self.feature_maps_size[2])
-        self.econv1_2D = base.conv3x3(self.feature_maps_size[2], self.feature_maps_size[2], self.strides[0])
-        self.ebn5_2D = nn.BatchNorm2d(self.feature_maps_size[2])
+        # self.econv1_2D = base.conv3x3(self.feature_maps_size[2], self.feature_maps_size[2], self.strides[0])
+        # self.ebn5_2D = nn.BatchNorm2d(self.feature_maps_size[2])
 
         self.dconv2_2D = base.deconv3x3(self.feature_maps_size[3], self.feature_maps_size[1], self.strides[0])
         self.bn6_2D = nn.BatchNorm2d(self.feature_maps_size[1])
-        self.econv2_2D = base.conv3x3(self.feature_maps_size[1], self.feature_maps_size[1], self.strides[0])
-        self.ebn6_2D = nn.BatchNorm2d(self.feature_maps_size[1])
+        # self.econv2_2D = base.conv3x3(self.feature_maps_size[1], self.feature_maps_size[1], self.strides[0])
+        # self.ebn6_2D = nn.BatchNorm2d(self.feature_maps_size[1])
 
         self.dconv3_2D = base.deconv3x3(self.feature_maps_size[2], self.feature_maps_size[0], self.strides[0])
         self.bn7_2D = nn.BatchNorm2d(self.feature_maps_size[0])
-        self.econv3_2D = base.conv3x3(self.feature_maps_size[0], self.feature_maps_size[0], self.strides[0])
-        self.ebn7_2D = nn.BatchNorm2d(self.feature_maps_size[0])
+        # self.econv3_2D = base.conv3x3(self.feature_maps_size[0], self.feature_maps_size[0], self.strides[0])
+        # self.ebn7_2D = nn.BatchNorm2d(self.feature_maps_size[0])
 
         self.dconv4_2D = base.deconv3x3(self.feature_maps_size[1], self.num_out_frames, self.strides[0])
 
@@ -129,9 +129,10 @@ class SpatioTemporalNet(nn.Module):
 
         # enc_x4_all = torch.stack(enc_x4_all, dim=2)
         out = self.conv3D_T(out)
-        # out = self.relu(self.bn3D_T(out.reshape((out.shape[0],
-        #             out.shape[1]*out.shape[2], out.shape[3], out.shape[4]))))
-        out = self.relu(self.bn3D_T(out))
+        print(out.shape)
+        out = self.relu(self.bn3D_T(out.reshape((out.shape[0],
+                    out.shape[1]*out.shape[2], out.shape[3], out.shape[4]))))
+        # out = self.relu(self.bn3D_T(out))
         print(out.shape)
         out = self.relu(self.bn1D_T(self.conv1D_T(out)))
 
