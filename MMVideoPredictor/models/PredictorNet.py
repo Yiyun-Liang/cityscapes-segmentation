@@ -87,7 +87,7 @@ class SpatioTemporalNet(nn.Module):
         # self.econv1_2D = base.conv3x3(self.feature_maps_size[3], self.feature_maps_size[3], self.strides[0])
         # self.ebn5_2D = nn.BatchNorm2d(self.feature_maps_size[3])
 
-        self.dconv2_2D = base.deconv3x3(self.feature_maps_size[3], self.feature_maps_size[1], 2)
+        self.dconv2_2D = base.deconv3x3(self.feature_maps_size[3], self.feature_maps_size[2], 2)
         self.bn6_2D = nn.BatchNorm2d(self.feature_maps_size[2])
         # self.econv2_2D = base.conv3x3(self.feature_maps_size[2], self.feature_maps_size[2], self.strides[0])
         # self.ebn6_2D = nn.BatchNorm2d(self.feature_maps_size[2])
@@ -166,7 +166,7 @@ class SpatioTemporalNet(nn.Module):
         dec_x2 = self.relu(self.bn6_2D(self.dconv2_2D(dec_x3)))
         print(dec_x2.shape)
         dec_x1 = self.relu(self.bn7_2D(self.dconv3_2D(dec_x2)))
-        dec_x0 = self.relu(self.bn7_2D(self.dconv4_2D(dec_x1)))
+        dec_x0 = self.relu(self.bn8_2D(self.dconv4_2D(dec_x1)))
         print(dec_x1.shape)
 
 
