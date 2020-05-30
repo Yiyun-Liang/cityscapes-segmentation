@@ -155,7 +155,7 @@ class SpatioTemporalNet(nn.Module):
 
         # Decoder
         dec_x3 = self.relu(self.bn5_2D(self.dconv1_2D(out)))
-        print(dex_x3.shape)
+        print(dec_x3.shape)
         dec_x2 = self.relu(self.bn6_2D(self.dconv2_2D(dec_x3)))
         print(dec_x2.shape)
         dec_x1 = self.relu(self.bn7_2D(self.dconv3_2D(dec_x2)))
