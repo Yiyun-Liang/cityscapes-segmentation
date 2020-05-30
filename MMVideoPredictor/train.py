@@ -85,7 +85,7 @@ def train(epoch):
 
 
         criterion1 = torch.mean(torch.abs(preds - targets))
-        criterion2 = ssim(preds, targets, data_range=targets.max()-targets.min())
+        criterion2 = ssim(preds, targets, val_range=targets.max()-targets.min())
         loss = criterion1
 
         l1.append(criterion1.cpu())
@@ -141,7 +141,7 @@ def test(epoch):
         preds = torch.tanh(rnet.forward(input_img))
 
         criterion1 = torch.mean(torch.abs(preds - targets))
-        criterion2 = ssim(preds, targets, data_range=targets.max()-targets.min())
+        criterion2 = ssim(preds, targets, val_range=targets.max()-targets.min())
         loss = criterion1
 
         l1.append(criterion1.detach().cpu())
