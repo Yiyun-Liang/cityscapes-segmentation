@@ -115,6 +115,7 @@ def train(epoch):
     print(log_str)
 
 def test(epoch):
+    global best_loss
     rnet.eval()
     l1, ssim_loss = [], []
     matches, losses = [], []
@@ -184,6 +185,7 @@ resnet = nn.Sequential(*list(resnet.children())[:-2]).to(device)
 rnet = PredictorNet.SpatioTemporalNet(3, 3, resnet)
 
 start_epoch = 0
+best_loss = 1000
 if args.ckpt_dir:
     ckpt = torch.load(args.ckpt_dir)
     rnet.load_state_dict(ckpt['rnet'])
