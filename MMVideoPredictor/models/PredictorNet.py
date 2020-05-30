@@ -26,8 +26,8 @@ class SpatioTemporalNet(nn.Module):
         self.num_out_frames = num_out_frames
         self.num_frames = num_frames
         self.num_layers = 4
-        self.strides = [1,1,1,1]
-        self.feature_maps_size = [64,128,256,512]
+        self.strides = [1, 1, 1, 1]
+        self.feature_maps_size = [32, 64, 128, 256, 512]
         self.relu = nn.ReLU(inplace=True)
         self.embedding_net = embedding_net
 
@@ -76,28 +76,32 @@ class SpatioTemporalNet(nn.Module):
         # self.emb_bn4_3D = nn.BatchNorm2d(self.feature_maps_size[3])
 
         # 3D Convolutional Layers
-        self.conv3D_T = base.conv1x1_3D(2048, self.feature_maps_size[3], self.strides[3])
-        self.bn3D_T = nn.BatchNorm2d(self.feature_maps_size[3])
-        self.conv1D_T = base.conv1x1(self.feature_maps_size[3], self.feature_maps_size[3], self.strides[3])
-        self.bn1D_T = nn.BatchNorm2d(self.feature_maps_size[3])
+        self.conv3D_T = base.conv1x1_3D(2048, self.feature_maps_size[4], self.strides[3])
+        self.bn3D_T = nn.BatchNorm2d(self.feature_maps_size[4])
+        self.conv1D_T = base.conv1x1(self.feature_maps_size[4], self.feature_maps_size[4], self.strides[3])
+        self.bn1D_T = nn.BatchNorm2d(self.feature_maps_size[4])
 
         # Decoder Layers
-        self.dconv1_2D = base.deconv3x3(self.feature_maps_size[3], self.feature_maps_size[2], self.strides[0])
-        self.bn5_2D = nn.BatchNorm2d(self.feature_maps_size[2])
-        # self.econv1_2D = base.conv3x3(self.feature_maps_size[2], self.feature_maps_size[2], self.strides[0])
-        # self.ebn5_2D = nn.BatchNorm2d(self.feature_maps_size[2])
+        self.dconv1_2D = base.deconv3x3(self.feature_maps_size[4], self.feature_maps_size[3], 2)
+        self.bn5_2D = nn.BatchNorm2d(self.feature_maps_size[3])
+        # self.econv1_2D = base.conv3x3(self.feature_maps_size[3], self.feature_maps_size[3], self.strides[0])
+        # self.ebn5_2D = nn.BatchNorm2d(self.feature_maps_size[3])
 
-        self.dconv2_2D = base.deconv3x3(self.feature_maps_size[2], self.feature_maps_size[1], self.strides[0])
-        self.bn6_2D = nn.BatchNorm2d(self.feature_maps_size[1])
-        # self.econv2_2D = base.conv3x3(self.feature_maps_size[1], self.feature_maps_size[1], self.strides[0])
-        # self.ebn6_2D = nn.BatchNorm2d(self.feature_maps_size[1])
+        self.dconv2_2D = base.deconv3x3(self.feature_maps_size[3], self.feature_maps_size[1], 2)
+        self.bn6_2D = nn.BatchNorm2d(self.feature_maps_size[2])
+        # self.econv2_2D = base.conv3x3(self.feature_maps_size[2], self.feature_maps_size[2], self.strides[0])
+        # self.ebn6_2D = nn.BatchNorm2d(self.feature_maps_size[2])
 
-        self.dconv3_2D = base.deconv3x3(self.feature_maps_size[1], self.feature_maps_size[0], self.strides[0])
-        self.bn7_2D = nn.BatchNorm2d(self.feature_maps_size[0])
-        # self.econv3_2D = base.conv3x3(self.feature_maps_size[0], self.feature_maps_size[0], self.strides[0])
-        # self.ebn7_2D = nn.BatchNorm2d(self.feature_maps_size[0])
+        self.dconv3_2D = base.deconv3x3(self.feature_maps_size[2], self.feature_maps_size[1], 2)
+        self.bn7_2D = nn.BatchNorm2d(self.feature_maps_size[1])
+        # self.econv3_2D = base.conv3x3(self.feature_maps_size[1], self.feature_maps_size[1], self.strides[0])
+        # self.ebn7_2D = nn.BatchNorm2d(self.feature_maps_size[1])
 
-        self.dconv4_2D = base.deconv3x3(self.feature_maps_size[1], self.num_out_frames, self.strides[0])
+        self.dconv4_2D = base.deconv3x3(self.feature_maps_size[1], self.feature_maps_size[0], 2)
+        self.bn8_2D = nn.BatchNorm2d(self.feature_maps_size[0])
+
+        self.dconv5_2D = base.deconv3x3(self.feature_maps_size[0], 9, 2)
+
 
         self.pool = nn.AvgPool2d(2, padding=0)
 
@@ -162,23 +166,26 @@ class SpatioTemporalNet(nn.Module):
         dec_x2 = self.relu(self.bn6_2D(self.dconv2_2D(dec_x3)))
         print(dec_x2.shape)
         dec_x1 = self.relu(self.bn7_2D(self.dconv3_2D(dec_x2)))
+        dec_x0 = self.relu(self.bn7_2D(self.dconv4_2D(dec_x1)))
         print(dec_x1.shape)
 
 
 
 
-        dec_x3 = self.relu(self.bn5_2D(self.dconv1_2D(enc_x4_all)))
-        edec_x4 = self.relu(self.ebn5_2D(self.econv1_2D(enc_x3)))
-        dec_x3 = torch.cat([dec_x3, edec_x4], dim=1)
+        # dec_x3 = self.relu(self.bn5_2D(self.dconv1_2D(enc_x4_all)))
+        # edec_x4 = self.relu(self.ebn5_2D(self.econv1_2D(enc_x3)))
+        # dec_x3 = torch.cat([dec_x3, edec_x4], dim=1)
 
-        dec_x2 = self.relu(self.bn6_2D(self.dconv2_2D(dec_x3)))
-        edec_x3 = self.relu(self.ebn6_2D(self.econv2_2D(enc_x2)))
-        dec_x2 = torch.cat([dec_x2, edec_x3], dim=1)
+        # dec_x2 = self.relu(self.bn6_2D(self.dconv2_2D(dec_x3)))
+        # edec_x3 = self.relu(self.ebn6_2D(self.econv2_2D(enc_x2)))
+        # dec_x2 = torch.cat([dec_x2, edec_x3], dim=1)
 
-        dec_x1 = self.relu(self.bn7_2D(self.dconv3_2D(dec_x2)))
-        edec_x2 = self.relu(self.ebn7_2D(self.econv3_2D(enc_x1)))
-        dec_x1 = torch.cat([dec_x1, edec_x2], dim=1)
+        # dec_x1 = self.relu(self.bn7_2D(self.dconv3_2D(dec_x2)))
+        # edec_x2 = self.relu(self.ebn7_2D(self.econv3_2D(enc_x1)))
+        # dec_x1 = torch.cat([dec_x1, edec_x2], dim=1)
 
-        output = (self.dconv4_2D(dec_x1))
+        output = (self.dconv5_2D(dec_x0))
+        print(output.shape)
+        raise
 
         return output

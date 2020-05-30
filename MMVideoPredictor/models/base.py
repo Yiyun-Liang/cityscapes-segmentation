@@ -25,6 +25,6 @@ def conv1x1_3D(in_planes, out_planes, stride=1):
     "1x1 3D convolution with padding"
     return nn.Conv3d(in_planes, out_planes, kernel_size=(3,1,1)) #, stride=stride, padding=(1,0,0), bias=False)
 
-def deconv3x3(in_planes, out_planes, stride=1):
+def deconv3x3(in_planes, out_planes, stride=2):
     "3x3 2D deconvolution"
-    return nn.ConvTranspose2d(in_planes, out_planes, kernel_size=(2,2), stride=2, padding=0)
+    return nn.ConvTranspose2d(in_planes, out_planes, kernel_size=(2,2), stride=stride, padding=0)
