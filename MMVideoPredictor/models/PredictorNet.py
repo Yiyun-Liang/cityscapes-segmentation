@@ -87,12 +87,12 @@ class SpatioTemporalNet(nn.Module):
         # self.econv1_2D = base.conv3x3(self.feature_maps_size[2], self.feature_maps_size[2], self.strides[0])
         # self.ebn5_2D = nn.BatchNorm2d(self.feature_maps_size[2])
 
-        self.dconv2_2D = base.deconv3x3(self.feature_maps_size[3], self.feature_maps_size[1], self.strides[0])
+        self.dconv2_2D = base.deconv3x3(self.feature_maps_size[2], self.feature_maps_size[1], self.strides[0])
         self.bn6_2D = nn.BatchNorm2d(self.feature_maps_size[1])
         # self.econv2_2D = base.conv3x3(self.feature_maps_size[1], self.feature_maps_size[1], self.strides[0])
         # self.ebn6_2D = nn.BatchNorm2d(self.feature_maps_size[1])
 
-        self.dconv3_2D = base.deconv3x3(self.feature_maps_size[2], self.feature_maps_size[0], self.strides[0])
+        self.dconv3_2D = base.deconv3x3(self.feature_maps_size[1], self.feature_maps_size[0], self.strides[0])
         self.bn7_2D = nn.BatchNorm2d(self.feature_maps_size[0])
         # self.econv3_2D = base.conv3x3(self.feature_maps_size[0], self.feature_maps_size[0], self.strides[0])
         # self.ebn7_2D = nn.BatchNorm2d(self.feature_maps_size[0])
