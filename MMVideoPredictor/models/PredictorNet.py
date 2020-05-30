@@ -28,7 +28,7 @@ class SpatioTemporalNet(nn.Module):
         self.num_layers = 4
         self.strides = [1, 1, 1, 1]
         self.feature_maps_size = [32, 64, 128, 256, 512]
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.ReLU()
         self.embedding_net = embedding_net
 
 
