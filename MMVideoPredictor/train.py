@@ -181,8 +181,29 @@ trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames
 trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 testloader = torchdata.DataLoader(testset, batch_size=int(args.batch_size/2), shuffle=False, num_workers=args.num_workers)
 # rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3)
+# if pretrained:
+#         print('pretrained resnet50 loading...')
+#         model_dict = model.state_dict()
+#         if custom is not None:
+#             print('loading custom ckpt')
+#             pretrained_dict = torch.load(custom)
+#         else:
+#             print('loading imagenet pretrained resnet50')
+#             pretrained_dict = model_zoo.load_url(model_urls['resnet50'])
+#         overlap_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+#         model_dict.update(overlap_dict)
+#         model.load_state_dict(model_dict)
+#     return model
+
+
+# resnet = torch_models.resnet50(pretrained=False)
+
+
+
+
+
 device = torch.device("cuda")
-resnet = torch_models.resnet50(pretrained=False)
+resnet = torch_models.resnet50(pretrained=True)
 resnet = nn.Sequential(*list(resnet.children())[:-2]).to(device)
 rnet = PredictorNet.SpatioTemporalNet(3, 3, resnet)
 
