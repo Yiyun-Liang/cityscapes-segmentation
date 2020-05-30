@@ -76,7 +76,7 @@ class SpatioTemporalNet(nn.Module):
         # self.emb_bn4_3D = nn.BatchNorm2d(self.feature_maps_size[3])
 
         # 3D Convolutional Layers
-        self.conv3D_T = base.conv1x1_3D(self.feature_maps_size[3], self.feature_maps_size[3], self.strides[3])
+        self.conv3D_T = base.conv1x1_3D(2048, self.feature_maps_size[3], self.strides[3])
         self.bn3D_T = nn.BatchNorm2d(self.feature_maps_size[3])
         self.conv1D_T = base.conv1x1(self.feature_maps_size[3], self.feature_maps_size[3], self.strides[3])
         self.bn1D_T = nn.BatchNorm2d(self.feature_maps_size[3])
