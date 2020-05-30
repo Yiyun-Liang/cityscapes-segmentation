@@ -127,14 +127,22 @@ def get_ratio(seg_map, target=False, ignore_class=255):
         #print(cl, torch.sum(seg_map[bs, :, :] == cl))
   return arr
 
+pixel_mat_x = None
+pixel_mat_y = None
+
 def get_moments(image, clas=None):
+  global pixel_mat_x
+  global pixel_mat_y
   # calculate moments of binary image
   H, W = image.shape
   center = torch.zeros(2)
-  r = torch.arange(0, W)
-  pixel_mat_x = r.expand(H, W)
-  pixel_mat_y = pixel_mat_x.clone()
-  pixel_mat_y = pixel_mat_y.permute(1, 0)
+  
+  if pixel_mat_x is None:
+    r = torch.arange(0, W)
+    pixel_mat_x = r.expand(H, W)
+    pixel_mat_y = pixel_mat_x.clone()
+    pixel_mat_y = pixel_mat_y.permute(1, 0)
+    pixel_mat_x, pixel_mat_y = pixel_mat_x.cuda(), pixel_mat_y.cuda()
   if clas is None:
     center[0] = torch.sum(pixel_mat_x * image)
     center[1] = torch.sum(pixel_mat_y * image)
@@ -187,8 +195,8 @@ def get_centroid(seg_map, target=False, ignore_class=255):
     for n in range(batch_size):
       moments = torch.zeros((num_classes, 2))
       for i in range(num_classes):
-        cur = arr[n][i].clone()
-        c = get_moments(cur.cpu())
+        #cur = arr[n][i].clone()
+        c = get_moments(arr[n][i])
         moments[i] = c
       res[n] = moments
   else: 
@@ -198,7 +206,7 @@ def get_centroid(seg_map, target=False, ignore_class=255):
       single = arr[n]
       for i in range(num_classes):
         cur = single.clone()
-        c = get_moments(cur.cpu(), clas=i)
+        c = get_moments(cur, clas=i)
         moments[i] = c
       res[n] = moments
   return res
