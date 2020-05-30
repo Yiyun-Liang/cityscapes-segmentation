@@ -87,11 +87,11 @@ def train(epoch):
 
 
         criterion1 = torch.mean(torch.abs(preds - targets))
-        criterion2 = ssim(preds, targets, val_range=targets.max()-targets.min())
+        # criterion2 = ssim(preds, targets, val_range=targets.max()-targets.min())
         loss = criterion1
 
         l1.append(criterion1.cpu())
-        ssim_loss.append(criterion2.detach().cpu())
+        # ssim_loss.append(criterion2.detach().cpu())
         losses.append(loss.cpu())
 
         optimizer.zero_grad()
@@ -100,18 +100,19 @@ def train(epoch):
 
     loss = torch.stack(losses).mean()
     l1_loss = torch.stack(l1).mean()
-    ssim_loss = torch.stack(ssim_loss).mean()
+    # ssim_loss = torch.stack(ssim_loss).mean()
 
     log_value('Train Total Loss', loss, epoch)
     log_value('Train L1 Loss', l1_loss, epoch)
-    log_value('Train SSIM Loss', ssim_loss, epoch)
+    # log_value('Train SSIM Loss', ssim_loss, epoch)
 
     writer.add_scalar('Loss/train', loss, epoch)
     writer.add_scalar('L1_loss/train', l1_loss, epoch)
-    writer.add_scalar('SSIM_loss/train', ssim_loss, epoch)
+    # writer.add_scalar('SSIM_loss/train', ssim_loss, epoch)
     writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], epoch)
 
-    log_str = 'Train Epoch: %d | Loss: %.3f | L1: %.3f | MS-SSIM: %.4f'%(epoch, loss, l1_loss, ssim_loss)
+    # log_str = 'Train Epoch: %d | Loss: %.3f | L1: %.3f | MS-SSIM: %.4f'%(epoch, loss, l1_loss, ssim_loss)
+    log_str = 'Train Epoch: %d | Loss: %.3f | L1: %.3f'%(epoch, loss, l1_loss)
     print(log_str)
 
 def test(epoch):
@@ -146,25 +147,26 @@ def test(epoch):
         targets = targets.reshape(-1, targets.shape[2], targets.shape[3], targets.shape[4])
 
         criterion1 = torch.mean(torch.abs(preds - targets))
-        criterion2 = ssim(preds, targets, val_range=targets.max()-targets.min())
+        # criterion2 = ssim(preds, targets, val_range=targets.max()-targets.min())
         loss = criterion1
 
         l1.append(criterion1.detach().cpu())
-        ssim_loss.append(criterion2.detach().cpu())
+        # ssim_loss.append(criterion2.detach().cpu())
         losses.append(loss.detach().cpu())
 
     loss = torch.stack(losses).mean()
     l1_loss = torch.stack(l1).mean()
-    ssim_loss = torch.stack(ssim_loss).mean()
+    # ssim_loss = torch.stack(ssim_loss).mean()
 
     log_value('Validation Total Loss', loss, epoch)
     log_value('Validation L1 Loss', l1_loss, epoch)
-    log_value('Validation MSSSIM Loss', ssim_loss, epoch)
+    # log_value('Validation MSSSIM Loss', ssim_loss, epoch)
     writer.add_scalar('Loss/val', loss, epoch)
     writer.add_scalar('L1_loss/val', l1_loss, epoch)
-    writer.add_scalar('SSIM_loss/val', ssim_loss, epoch)
+    # writer.add_scalar('SSIM_loss/val', ssim_loss, epoch)
 
-    log_str = 'Test Epoch: %d | Loss: %.3f | L1: %.3f | MS-SSIM: %.4f'%(epoch, loss, l1_loss, ssim_loss)
+    # log_str = 'Test Epoch: %d | Loss: %.3f | L1: %.3f | MS-SSIM: %.4f'%(epoch, loss, l1_loss, ssim_loss)
+    log_str = 'Test Epoch: %d | Loss: %.3f | L1: %.3f'%(epoch, loss, l1_loss)
     print(log_str)
     rnet_state_dict = rnet.module.state_dict() if args.parallel else rnet.state_dict()
 
