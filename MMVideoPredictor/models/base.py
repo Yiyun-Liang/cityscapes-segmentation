@@ -23,7 +23,7 @@ def conv1x1(in_planes, out_planes, stride=1):
 
 def conv1x1_3D(in_planes, out_planes, stride=1):
     "1x1 3D convolution with padding"
-    return nn.Conv3d(in_planes, out_planes, kernel_size=(4,1,1)) #, stride=stride, padding=(1,0,0), bias=False)
+    return nn.Conv3d(in_planes, out_planes, kernel_size=(3,1,1)) #, stride=stride, padding=(1,0,0), bias=False)
 
 def deconv3x3(in_planes, out_planes, stride=1):
     "3x3 2D deconvolution"

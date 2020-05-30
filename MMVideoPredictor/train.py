@@ -27,6 +27,7 @@ from models import PredictorNet
 from utils import utils
 from pytorch_msssim import ssim
 from torch.utils.tensorboard import SummaryWriter
+import torchvision.models as torch_models
 
 import argparse
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
@@ -34,7 +35,7 @@ parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
 parser.add_argument('--data_dir', default='data/', help= 'data directory')
 parser.add_argument('--train_dir', default='data/', help='training data directory')
 parser.add_argument('--test_dir', default='data/', help='test data directory')
-parser.add_argument('--frames', nargs='+', help='Frames to use as input and output', required=True)
+parser.add_argument('--frames', nargs='+', help='Frames to use as input and output')
 parser.add_argument('--cv_dir', default='cv/tmp/', help='checkpoint directory (models and logs are saved here)')
 parser.add_argument('--ckpt_dir', help='checkpoint directory (models and logs are saved here)')
 parser.add_argument('--batch_size', type=int, default=256, help='batch size')
@@ -55,24 +56,36 @@ def train(epoch):
     matches, losses = [], []
     for batch_idx, inputs in tqdm.tqdm(enumerate(trainloader), total=len(trainloader)):
 
-        emb, images = inputs
-        if not args.parallel:
-            emb = emb.cuda()
-            images = images.cuda()
+        # emb, images = inputs
+        # if not args.parallel:
+        #     emb = emb.cuda()
+        #     images = images.cuda()
+        input_img, targets = inputs
 
-        # last three frames as target
-        targets = torch.tanh(torch.cat(( \
-            images[:, images.shape[1]-3, :, :, :], \
-            images[:, images.shape[1]-2, :, :, :], \
-            images[:, images.shape[1]-1, :, :, :]), dim=1))
-        # all other frames + embedding(optional) as input
-        images = images[:, :images.shape[1]-3, :, :, :]
+        if not args.parallel:
+            input_img = input_img.cuda()
+            targets = targets.cuda()
+
+
+
+        # # last three frames as target
+        # targets = torch.tanh(torch.cat(( \
+        #     images[:, images.shape[1]-3, :, :, :], \
+        #     images[:, images.shape[1]-2, :, :, :], \
+        #     images[:, images.shape[1]-1, :, :, :]), dim=1))
+        # # all other frames + embedding(optional) as input
+        # images = images[:, :images.shape[1]-3, :, :, :]
         # v_inputs = images.data
 
-        preds = torch.tanh(rnet.forward(images, emb, args.embeddings))
 
-        criterion1 = torch.mean(torch.abs(preds-targets))
-        criterion2 = ssim(preds[:,6:9,:,:], targets[:,6:9,:,:], data_range=targets.max()-targets.min())
+        # preds = torch.tanh(rnet.forward(images, emb, args.embeddings))
+
+        preds = torch.tanh(rnet.forward(input_img))
+
+
+
+        criterion1 = torch.mean(torch.abs(preds - targets))
+        criterion2 = ssim(preds, targets, data_range=targets.max()-targets.min())
         loss = criterion1
 
         l1.append(criterion1.cpu())
@@ -105,23 +118,30 @@ def test(epoch):
     matches, losses = [], []
     for batch_idx, inputs in tqdm.tqdm(enumerate(testloader), total=len(testloader)):
 
-        emb, images = inputs
+        # emb, images = inputs
+        # if not args.parallel:
+        #     emb = emb.cuda()
+        #     images = images.cuda()
+
+        # # last three frames as target
+        # targets = torch.tanh(torch.cat(( \
+        #     images[:, images.shape[1]-3, :, :, :], \
+        #     images[:, images.shape[1]-2, :, :, :], \
+        #     images[:, images.shape[1]-1, :, :, :]), dim=1))
+        # # all other frames + embedding(optional) as input
+        # images = images[:, :images.shape[1]-3, :, :, :]
+
+        # preds = torch.tanh(rnet.forward(images, emb, args.embeddings))
+        input_img, targets = inputs
+
         if not args.parallel:
-            emb = emb.cuda()
-            images = images.cuda()
+            input_img = input_img.cuda()
+            targets = targets.cuda()
 
-        # last three frames as target
-        targets = torch.tanh(torch.cat(( \
-            images[:, images.shape[1]-3, :, :, :], \
-            images[:, images.shape[1]-2, :, :, :], \
-            images[:, images.shape[1]-1, :, :, :]), dim=1))
-        # all other frames + embedding(optional) as input
-        images = images[:, :images.shape[1]-3, :, :, :]
+        preds = torch.tanh(rnet.forward(input_img))
 
-        preds = torch.tanh(rnet.forward(images, emb, args.embeddings))
-
-        criterion1 = torch.mean(torch.abs(preds-targets))
-        criterion2 = ssim(preds[:,6:9,:,:], targets[:,6:9,:,:], data_range=targets.max()-targets.min())
+        criterion1 = torch.mean(torch.abs(preds - targets))
+        criterion2 = ssim(preds, targets, data_range=targets.max()-targets.min())
         loss = criterion1
 
         l1.append(criterion1.detach().cpu())
@@ -153,7 +173,11 @@ writer = SummaryWriter(comment=f'LR_{args.lr}_BS_{args.batch_size}')
 trainset, testset = utils.get_dataset(args.train_dir, args.test_dir, args.frames, args.embeddings)
 trainloader = torchdata.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 testloader = torchdata.DataLoader(testset, batch_size=int(args.batch_size/2), shuffle=False, num_workers=args.num_workers)
-rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3)
+# rnet = PredictorNet.SpatioTemporalNet(len(args.frames)-3, 3)
+device = torch.device("cuda")
+resnet = torch_models.resnet50(pretrained=False)
+resnet = nn.Sequential(*list(resnet.children())[:-2]).to(device)
+rnet = PredictorNet.SpatioTemporalNet(3, 3, resnet)
 
 start_epoch = 0
 if args.ckpt_dir:
@@ -165,7 +189,6 @@ c = torch.cuda.device_count()
 print('Number of GPUs:', c)
 # if c > 1:
 #     rnet = nn.DataParallel(rnet, device_ids=[0, 1, 2, 3])
-device = torch.device("cuda")
 rnet.to(device)
 
 # Save the configuration to the output directory
