@@ -129,8 +129,10 @@ class SpatioTemporalNet(nn.Module):
 
         # enc_x4_all = torch.stack(enc_x4_all, dim=2)
         out = self.conv3D_T(out)
-        out = self.relu(self.bn3D_T(out.reshape((out.shape[0],
-                    out.shape[1]*out.shape[2], out.shape[3], out.shape[4]))))
+        # out = self.relu(self.bn3D_T(out.reshape((out.shape[0],
+        #             out.shape[1]*out.shape[2], out.shape[3], out.shape[4]))))
+        out = self.relu(self.bn3D_T(out))
+        print(out.shape)
         out = self.relu(self.bn1D_T(self.conv1D_T(out)))
 
         print(out.shape)
