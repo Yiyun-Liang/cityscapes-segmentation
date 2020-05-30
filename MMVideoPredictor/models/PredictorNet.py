@@ -154,6 +154,16 @@ class SpatioTemporalNet(nn.Module):
         #         enc_x4_all = enc_x4_all*weights
 
         # Decoder
+        dec_x3 = self.relu(self.bn5_2D(self.dconv1_2D(out)))
+        print(dex_x3.shape)
+        dec_x2 = self.relu(self.bn6_2D(self.dconv2_2D(dec_x3)))
+        print(dec_x2.shape)
+        dec_x1 = self.relu(self.bn7_2D(self.dconv3_2D(dec_x2)))
+        print(dec_x1.shape)
+
+
+
+
         dec_x3 = self.relu(self.bn5_2D(self.dconv1_2D(enc_x4_all)))
         edec_x4 = self.relu(self.ebn5_2D(self.econv1_2D(enc_x3)))
         dec_x3 = torch.cat([dec_x3, edec_x4], dim=1)
