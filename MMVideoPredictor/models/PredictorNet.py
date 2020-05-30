@@ -133,6 +133,8 @@ class SpatioTemporalNet(nn.Module):
                     out.shape[1]*out.shape[2], out.shape[3], out.shape[4]))))
         out = self.relu(self.bn1D_T(self.conv1D_T(out)))
 
+        print(out.shape)
+
         # Embeddings
         # if embeddings:
         #     for frame_idx in range(1, emb.shape[1], 1):
