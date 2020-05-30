@@ -127,20 +127,20 @@ class SpatioTemporalNet(nn.Module):
         out_1 = self.relu(self.embedding_net(x[:, 0, ...]))[:, :, None, :, :]
         out_2 = self.relu(self.embedding_net(x[:, 1, ...]))[:, :, None, :, :]
         out_3 = self.relu(self.embedding_net(x[:, 2, ...]))[:, :, None, :, :]
-        print(out_1.shape)
+        # print(out_1.shape)
         out = torch.cat((out_1, out_2, out_3), axis=2)
-        print(out.shape)
+        # print(out.shape)
 
         # enc_x4_all = torch.stack(enc_x4_all, dim=2)
         out = self.conv3D_T(out)
-        print(out.shape)
+        # print(out.shape)
         out = self.relu(self.bn3D_T(out.reshape((out.shape[0],
                     out.shape[1]*out.shape[2], out.shape[3], out.shape[4]))))
         # out = self.relu(self.bn3D_T(out))
-        print(out.shape)
+        # print(out.shape)
         out = self.relu(self.bn1D_T(self.conv1D_T(out)))
 
-        print(out.shape)
+        # print(out.shape)
 
         # Embeddings
         # if embeddings:
@@ -162,12 +162,12 @@ class SpatioTemporalNet(nn.Module):
 
         # Decoder
         dec_x3 = self.relu(self.bn5_2D(self.dconv1_2D(out)))
-        print(dec_x3.shape)
+        # print(dec_x3.shape)
         dec_x2 = self.relu(self.bn6_2D(self.dconv2_2D(dec_x3)))
-        print(dec_x2.shape)
+        # print(dec_x2.shape)
         dec_x1 = self.relu(self.bn7_2D(self.dconv3_2D(dec_x2)))
         dec_x0 = self.relu(self.bn8_2D(self.dconv4_2D(dec_x1)))
-        print(dec_x1.shape)
+        # print(dec_x1.shape)
 
 
 
@@ -185,7 +185,9 @@ class SpatioTemporalNet(nn.Module):
         # dec_x1 = torch.cat([dec_x1, edec_x2], dim=1)
 
         output = (self.dconv5_2D(dec_x0))
-        print(output.shape)
-        raise
+        # print(output.shape)
+        # raise
+        output = output.reshape(output.shape[0], 3, 3, output.shape[2], -1)
+        # print(output.shape)
 
         return output
