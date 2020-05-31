@@ -36,7 +36,7 @@ parser.add_argument('--data_dir', default='data/', help= 'data directory')
 parser.add_argument('--train_dir', default='data/', help='training data directory')
 parser.add_argument('--test_dir', default='data/', help='test data directory')
 parser.add_argument('--frames', nargs='+', help='Frames to use as input and output')
-parser.add_argument('--cv_dir', default='cv/tmp/', help='checkpoint directory (models and logs are saved here)')
+parser.add_argument('--cv_dir', default='cv/from_scratch/', help='checkpoint directory (models and logs are saved here)')
 parser.add_argument('--ckpt_dir', help='checkpoint directory (models and logs are saved here)')
 parser.add_argument('--batch_size', type=int, default=5, help='batch size')
 parser.add_argument('--epoch_step', type=int, default=10000, help='epochs after which lr is decayed')
@@ -203,7 +203,7 @@ testloader = torchdata.DataLoader(testset, batch_size=int(args.batch_size/2), sh
 
 
 device = torch.device("cuda")
-resnet = torch_models.resnet50(pretrained=True)
+resnet = torch_models.resnet50(pretrained=False)
 resnet = nn.Sequential(*list(resnet.children())[:-2]).to(device)
 rnet = PredictorNet.SpatioTemporalNet(3, 3, resnet)
 
