@@ -36,7 +36,7 @@ parser.add_argument('--data_dir', default='data/', help= 'data directory')
 parser.add_argument('--train_dir', default='data/', help='training data directory')
 parser.add_argument('--test_dir', default='data/', help='test data directory')
 parser.add_argument('--frames', nargs='+', help='Frames to use as input and output')
-parser.add_argument('--cv_dir', default='cv/from_colorization/', help='checkpoint directory (models and logs are saved here)')
+parser.add_argument('--cv_dir', default='cv/from_scratch/', help='checkpoint directory (models and logs are saved here)')
 parser.add_argument('--ckpt_dir', help='checkpoint directory (models and logs are saved here)')
 parser.add_argument('--batch_size', type=int, default=5, help='batch size')
 parser.add_argument('--epoch_step', type=int, default=10000, help='epochs after which lr is decayed')
@@ -204,11 +204,11 @@ testloader = torchdata.DataLoader(testset, batch_size=int(args.batch_size/2), sh
 
 device = torch.device("cuda")
 resnet = torch_models.resnet50(pretrained=False)
-model_dict = resnet.state_dict()
-pretrained_dict = torch.load("../colorization/cv/tmp/best_loss.pth")
-overlap_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
-model_dict.update(overlap_dict)
-resnet.load_state_dict(model_dict)
+# model_dict = resnet.state_dict()
+# pretrained_dict = torch.load("../colorization/cv/tmp/best_loss.pth")
+# overlap_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+# model_dict.update(overlap_dict)
+# resnet.load_state_dict(model_dict)
 
 
 
