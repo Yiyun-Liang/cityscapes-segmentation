@@ -31,7 +31,7 @@ import torchvision.models as torch_models
 
 import argparse
 parser = argparse.ArgumentParser(description='VideoPredictor Training')
-parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
+parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
 parser.add_argument('--data_dir', default='data/', help= 'data directory')
 parser.add_argument('--train_dir', default='data/', help='training data directory')
 parser.add_argument('--test_dir', default='data/', help='test data directory')
