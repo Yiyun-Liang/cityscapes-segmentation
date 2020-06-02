@@ -204,11 +204,11 @@ testloader = torchdata.DataLoader(testset, batch_size=int(args.batch_size/2), sh
 
 device = torch.device("cuda")
 resnet = torch_models.resnet50(pretrained=False)
-# model_dict = resnet.state_dict()
-# pretrained_dict = torch.load("../colorization/cv/tmp/best_loss.pth")
-# overlap_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
-# model_dict.update(overlap_dict)
-# resnet.load_state_dict(model_dict)
+model_dict = resnet.state_dict()
+pretrained_dict = torch.load("../colorization/cv/tmp/best_loss.pth")
+overlap_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+model_dict.update(overlap_dict)
+resnet.load_state_dict(model_dict)
 
 
 
