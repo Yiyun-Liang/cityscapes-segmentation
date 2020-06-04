@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 
-def smooth(csv_path,weight=0.95):
+def smooth(csv_path,weight=0.8):
     data = pd.read_csv(filepath_or_buffer=csv_path,header=0,names=['Step','Value'],dtype={'Step':np.int,'Value':np.float})
     scalar = data['Value'].values
     last = scalar[0]
@@ -17,7 +17,7 @@ def smooth(csv_path,weight=0.95):
     return save
 
 
-folder = 'data/test miou/'
+folder = 'data/train loss/'
 
 x_list = []
 losses = []
@@ -37,7 +37,7 @@ for x, loss, label in zip(x_list, losses, labels):
     plt.plot(x, loss, label=label)
 
 plt.xlabel('Epoch')
-plt.ylabel('mIoU')
+plt.ylabel('Loss')
 
 #plt.title("Loss of Segmentation Model using Different Pretext Methods")
 plt.legend(loc='upper left')
