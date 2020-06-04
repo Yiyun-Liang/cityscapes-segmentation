@@ -1,7 +1,8 @@
 # cityscapes-segmentation
 
-
 This repo explores different self-supervised pretext task for semantic segmentation on cityscapes dataset (original resolution 1024x2048).
+
+**Please Do Not Disclose.** 
 
 ### Pretext Tasks
 Pretext tasks we are implementing(using 15,000 frames of video data from cityscapes dataset):
